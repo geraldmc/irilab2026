@@ -8,7 +8,7 @@ Public API:
 """
 
 from .environment import setup, is_colab, mount_google_drive, has_gpu
-from .data import load_atgenexpress
+from .data import load_atgenexpress, load_plantvillage_orientation
 
 __version__ = "0.1.0"
 
@@ -18,5 +18,6 @@ __all__ = [
     "mount_google_drive",
     "has_gpu",
     "load_atgenexpress",
+    "load_plantvillage_orientation",
     "__version__",
 ]
