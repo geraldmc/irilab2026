@@ -48,7 +48,7 @@ These are decided, not aspirational. Don't deviate without a reason.
 
 - **Notebook filenames:** numeric prefix in workflow order, then a short descriptive name — `01_deg_analysis.ipynb`, `02_core_overlap.ipynb`. Sorts correctly without thinking about it.
 - **Question folder names:** lowercase, hyphenated — `r1-q1/`, not `R1Q1/` or `r1_q1/`.
-- **Rationale orientation notebooks** sit as a sibling of the question folders (e.g. `notebooks/r1/orientation.ipynb`), not nested in their own folder.
+- **Rationale orientation notebooks** sit as a sibling of the question folders (e.g. `notebooks/r1/r1_orientation.ipynb`), not nested in their own folder.
 - **Library promotion rule:** code shared by notebooks inside one question folder lives in that folder's `helpers.py`. It only graduates into `irilab2026/` after duplication across **three or more** notebooks in different folders. Don't pre-promote.
 - **Install line every notebook uses** is `pip install git+https://github.com/geraldmc/irilab2026.git@v0.1.0`. The tag in the install line must match `__version__` in `irilab2026/__init__.py` and `version` in `pyproject.toml`. Bump all three together when releasing.
 
@@ -99,4 +99,4 @@ These are pending choices. Don't silently default to one path; raise the questio
 
 ## Project status (as of v0.1.0)
 
-The library exists with `setup()` and `load_atgenexpress()`. Notebook directories exist with READMEs but no `.ipynb` files yet. The first notebook to be drafted is `notebooks/r1/orientation.ipynb`, followed by R1-Q1's four notebooks in workflow order. The orientation notebook is explicitly provisional — expect one structural revision after R1-Q1's analytical notebooks land and reveal what orientation actually needs to set up.
+The library exists with `setup()` and `load_atgenexpress()`. Notebook directories exist with READMEs but no `.ipynb` files yet. The first notebook to be drafted is `notebooks/r1/r1_orientation.ipynb`, followed by R1-Q1's four notebooks in workflow order. The orientation notebook is explicitly provisional — expect one structural revision after R1-Q1's analytical notebooks land and reveal what orientation actually needs to set up.
