@@ -13,6 +13,9 @@ should not assume "all nine AtGenExpress stresses" are present.
 """
 
 from __future__ import annotations
+import hashlib
+import tarfile
+import urllib.request
 
 from pathlib import Path
 from typing import Iterable
