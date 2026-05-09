@@ -1,0 +1,171 @@
+"""
+Environment setup: Colab detection, Google Drive mounting, runtime checks,
+and cache-path resolution.
+
+The single public function exposed by this module is `setup()`, which is the
+first thing every Virtual Lab notebook calls. The helpers it relies on are
+also available for direct use in the orientation notebook, which walks
+through them individually before introducing the wrapped form.
+"""
+
+from __future__ import annotations
+
+from pathlib import Path
+
+
+# ---------------------------------------------------------------------------
+# Public entry point
+# ---------------------------------------------------------------------------
+
+
+def setup(gpu_required: bool = False, mount_drive: bool = True) -> None:
+    """
+    Prepare the environment for a Virtual Lab notebook.
+
+    This function is the single first-cell call in every notebook. It does
+    three things:
+
+    1. Detects whether the notebook is running in Google Colab.
+    2. If running in Colab and ``mount_drive`` is True, mounts Google Drive
+       so the cache directory persists across sessions.
+    3. Checks the runtime against the notebook's declared GPU requirement.
+       Raises ``RuntimeError`` if the notebook needs a GPU and none is
+       available.
+
+    Parameters
+    ----------
+    gpu_required : bool, default False
+        If True, require a GPU runtime and raise ``RuntimeError`` if none is
+        detected. If False, run on whatever runtime is available; if a GPU is
+        present, the summary line will note it but execution continues.
+    mount_drive : bool, default True
+        If True (and running in Colab), mount Google Drive at
+        ``/content/drive``. Has no effect outside Colab.
+
+    Returns
+    -------
+    None
+        Prints a one-line summary of what was done.
+
+    Raises
+    ------
+    RuntimeError
+        If ``gpu_required=True`` and no GPU is available.
+    """
+    in_colab = is_colab()
+    drive_mounted = False
+    if in_colab and mount_drive:
+        drive_mounted = mount_google_drive()
+
+    gpu_available = has_gpu()
+    if gpu_required and not gpu_available:
+        raise RuntimeError(
+            "This notebook requires a GPU runtime, but none is available. "
+            "In Colab: Runtime → Change runtime type → Hardware accelerator → GPU."
+        )
+
+    _print_summary(
+        in_colab=in_colab,
+        drive_mounted=drive_mounted,
+        gpu_available=gpu_available,
+        gpu_required=gpu_required,
+    )
+
+
+# ---------------------------------------------------------------------------
+# Helpers — exposed for the orientation notebook
+# ---------------------------------------------------------------------------
+
+
+def is_colab() -> bool:
+    """
+    Return True if the current Python session is running in Google Colab.
+
+    Detection is by import: ``google.colab`` is a Colab-only package, so
+    its presence is a reliable signal.
+    """
+    try:
+        import google.colab  # noqa: F401
+        return True
+    except ImportError:
+        return False
+
+
+def mount_google_drive(mount_point: str = "/content/drive") -> bool:
+    """
+    Mount Google Drive at ``mount_point``.
+
+    Only meaningful in Colab. Outside Colab, returns False without doing
+    anything. Inside Colab, the first call per session prompts the user to
+    authorize Drive access; subsequent calls return immediately.
+    """
+    if not is_colab():
+        return False
+    from google.colab import drive  # type: ignore[import-not-found]
+    drive.mount(mount_point)
+    return True
+
+
+def has_gpu() -> bool:
+    """
+    Return True if a CUDA GPU is available to PyTorch in the current session.
+
+    This is the operationally relevant check: "can I actually use a GPU
+    here." A machine with a GPU but a CPU-only PyTorch build will return
+    False, which is correct — the GPU is unreachable from this Python
+    session.
+
+    Returns False (without raising) if PyTorch is not installed.
+    """
+    try:
+        import torch
+    except ImportError:
+        return False
+    return bool(torch.cuda.is_available())
+
+
+def cache_dir() -> Path:
+    """
+    Return the directory where datasets should be cached.
+
+    In Colab with Drive mounted: ``/content/drive/My Drive/irilab2026_cache/``.
+    In Colab without Drive: ``/content/irilab2026_cache/`` (lost on session
+    reset; only used as a fallback).
+    Outside Colab: ``~/.irilab2026_cache/``.
+
+    The directory is created if it doesn't exist.
+    """
+    if is_colab():
+        drive_root = Path("/content/drive/My Drive")
+        if drive_root.exists():
+            path = drive_root / "irilab2026_cache"
+        else:
+            path = Path("/content/irilab2026_cache")
+    else:
+        path = Path.home() / ".irilab2026_cache"
+    path.mkdir(parents=True, exist_ok=True)
+    return path
+
+
+# ---------------------------------------------------------------------------
+# Internal
+# ---------------------------------------------------------------------------
+
+
+def _print_summary(
+    *,
+    in_colab: bool,
+    drive_mounted: bool,
+    gpu_available: bool,
+    gpu_required: bool,
+) -> None:
+    """Print a one-line summary of the setup state."""
+    parts = []
+    parts.append("Colab" if in_colab else "local")
+    if in_colab:
+        parts.append("Drive mounted" if drive_mounted else "Drive not mounted")
+    if gpu_required:
+        parts.append("GPU OK" if gpu_available else "GPU MISSING")
+    else:
+        parts.append("GPU available" if gpu_available else "CPU only")
+    print("[irilab2026] " + " | ".join(parts))

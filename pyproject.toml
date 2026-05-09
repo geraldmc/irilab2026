@@ -1,0 +1,44 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "irilab2026"
+version = "0.1.0"
+description = "Shared infrastructure for the iResearch Institute 2026 Virtual Lab notebooks."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.11"
+authors = [
+    { name = "Gerald McCollam", email = "geraldmc@users.noreply.github.com" },
+]
+keywords = ["bioinformatics", "education", "arabidopsis", "atgenexpress"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Bio-Informatics",
+]
+dependencies = [
+    "pandas>=2.0",
+    "numpy>=1.24",
+    "GEOparse>=2.0",
+    "seaborn>=0.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/geraldmc/irilab2026"
+Issues = "https://github.com/geraldmc/irilab2026/issues"
+
+[tool.setuptools.packages.find]
+include = ["irilab2026*"]
+exclude = ["tests*"]
