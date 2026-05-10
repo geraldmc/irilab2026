@@ -30,7 +30,7 @@ irilab2026/
 └── README.md
 ```
 
-The library code (under `irilab2026/irilab2026`) is for "plumbing only" - meaning it does an important job but you don't need to see it, it just works. The files `environment.py` and `data.py` configure the environment on Colab for the student. Under this configuration all notebooks will run without further adjustment. The analytical and pedagogical code lives in the notebooks (under `notebooks`) and this is where students should focus their time and attention.
+The library code (under `irilab2026/irilab2026`) is "plumbing only" - meaning it does an important job but you don't need to see it, it just works. The files `environment.py` and `data.py` configure the environment on Colab for the student. Under this configuration all notebooks will run without further adjustment. The analytical and pedagogical code lives in the notebooks (under `notebooks`) and this is where students should focus their time and attention.
 
 ## How a student should use this repo
 
