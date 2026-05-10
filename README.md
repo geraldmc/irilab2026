@@ -6,23 +6,23 @@ The Virtual Lab repository for the `Decoding Plant Biology` portion of iResearch
 
 ```
 irilab2026/
-├── irilab2026/             # Python library (plumbing only)
-│   ├── environment.py      # setup(), Drive mounting, runtime checks
-│   └── data.py             # dataset loaders (gene expression, plant images)
-├── notebooks/              # Jupyter notebooks for every question
-│   ├── r1/                 # Rationale 1: gene expression
+├── irilab2026/                       # Python library (plumbing only)
+│   ├── environment.py                # setup(), Drive mounting, runtime checks
+│   └── data.py                       # dataset loaders (gene expression, plant images)
+├── notebooks/                        # Jupyter notebooks for every question
+│   ├── r1/                           # Rationale 1: gene expression
 │   │   ├── r1_orientation.ipynb
 │   │   ├── r1-q1/
 │   │   ├── r1-q2/
 │   │   ├── r1-q3/
 │   │   └── r1-q4/
-│   └── r2/                 # Rationale 2: plant disease imaging
+│   └── r2/                           # Rationale 2: plant disease imaging
 │   │   ├── r2_orientation.ipynb
 │       ├── r2-q1/
 │       ├── r2-q2/
 │       ├── r2-q3/
 │       └── r2-q4/
-├── tests/                  # Smoke tests for the library
+├── tests/                            # Smoke tests for the library
 ├── pyproject.toml
 ├── CHANGELOG.md
 ├── CLAUDE.md
