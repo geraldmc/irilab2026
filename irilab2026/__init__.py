@@ -7,8 +7,6 @@ Public API:
     load_atgenexpress  — load the AtGenExpress abiotic stress dataset
 """
 
-"""irilab2026 — shared library for the iResearch Institute 2026 Virtual Lab."""
-
 from .environment import (
     setup,
     is_colab,
