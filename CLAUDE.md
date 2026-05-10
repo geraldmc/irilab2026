@@ -97,6 +97,17 @@ These are pending choices. Don't silently default to one path; raise the questio
 - **Sample metadata loader.** `load_atgenexpress()` returns probes-by-samples DataFrames with GSM IDs as columns; tissue, time-point, and replicate metadata is encoded in GSM titles but not surfaced. Whether to add a `load_atgenexpress_metadata()` companion to the library is undecided. Don't add it unprompted.
 - **Notebook source format.** Notebooks are currently authored as `.ipynb` directly. Whether to move to a jupytext-paired `.py` / `.ipynb` setup so source is reviewable in Git is undecided. Don't introduce jupytext unprompted.
 
+## Cutting a data release
+
+1. Build the tarball: `python scripts/build_orientation_tarball.py`
+2. Note the SHA256 from the script's output box
+3. Cut the release on GitHub:
+   - Tag: `data-vX.Y.Z` (note the `data-` prefix)
+   - Drag the tarball into Assets
+   - **Click "Publish release," not "Save draft"** (drafts are not publicly downloadable)
+4. Update `_PV_*_URL` and `_PV_*_SHA256` in `irilab2026/data.py`
+5. Commit, push, smoke-test on a fresh Colab runtime
+
 ## Project status (as of v0.1.0)
 
 The library exists with `setup()` and `load_atgenexpress()`. Notebook directories exist with READMEs but no `.ipynb` files yet. The first notebook to be drafted is `notebooks/r1/r1_orientation.ipynb`, followed by R1-Q1's four notebooks in workflow order. The orientation notebook is explicitly provisional — expect one structural revision after R1-Q1's analytical notebooks land and reveal what orientation actually needs to set up.
