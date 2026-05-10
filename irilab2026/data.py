@@ -16,6 +16,8 @@ from __future__ import annotations
 import hashlib
 import tarfile
 import urllib.request
+from pathlib import Path
+import pandas as pd
 
 from pathlib import Path
 from typing import Iterable
@@ -184,10 +186,12 @@ def load_plantvillage_orientation():
                 _PV_ORIENTATION_SHA256,
                 tarball,
             )
+        # The tarball's internal layout is plantvillage_orientation/...,
+        # so we extract to the cache root and let the prefix create the
+        # extracted/ directory itself.
         print(f"Extracting to {extracted} ...")
-        extracted.mkdir(parents=True, exist_ok=True)
         with tarfile.open(tarball, "r:gz") as tf:
-            tf.extractall(extracted, filter="data")
+            tf.extractall(cache, filter="data")
 
     if not manifest_path.exists():
         raise RuntimeError(
@@ -214,6 +218,12 @@ def load_plantvillage_orientation():
         on="class",
         how="left",
     )
+
+    return {
+        "manifest": manifest,
+        "sample_paths": sample_paths,
+        "sample_dir": extracted,
+    }
 
     return {
         "manifest": manifest,
