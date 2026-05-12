@@ -146,6 +146,37 @@ def cache_dir() -> Path:
     path.mkdir(parents=True, exist_ok=True)
     return path
 
+def output_dir(question_slug: str) -> Path:
+    """Return the output directory for a given question, creating it if missing.
+
+    The path is environment-dependent:
+        Colab: /content/drive/MyDrive/irilab2026_outputs/<question_slug>/
+        Local: ~/.irilab2026_outputs/<question_slug>/
+
+    Use this to read or write per-question artifacts produced by one notebook
+    and consumed by another. For example:
+
+        de_path = output_dir("r1_q1") / "de_results.parquet"
+        de_results.to_parquet(de_path)
+
+    Parameters
+    ----------
+    question_slug : str
+        Identifier for the question, e.g. "r1_q1", "r2_q3".
+
+    Returns
+    -------
+    Path
+        The per-question output directory. The directory is created if it
+        does not already exist.
+    """
+    if is_colab():
+        root = Path("/content/drive/MyDrive/irilab2026_outputs")
+    else:
+        root = Path.home() / ".irilab2026_outputs"
+    path = root / question_slug
+    path.mkdir(parents=True, exist_ok=True)
+    return path
 
 # ---------------------------------------------------------------------------
 # Internal

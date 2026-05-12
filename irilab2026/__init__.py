@@ -13,7 +13,9 @@ from .environment import (
     mount_google_drive,
     has_gpu,
     cache_dir,
+    output_dir,
 )
+from .version import __version__
 
 from .data import (
     load_atgenexpress,
@@ -25,7 +27,8 @@ __all__ = [
     "is_colab",
     "mount_google_drive",
     "has_gpu",
-    "cache_dir",
+    "output_dir",
     "load_atgenexpress",
     "load_plantvillage_orientation",
+    "__version__",
 ]

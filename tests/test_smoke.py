@@ -62,3 +62,17 @@ def test_setup_raises_when_gpu_required_and_missing():
 
     with pytest.raises(RuntimeError, match="requires a GPU"):
         setup(gpu_required=True, mount_drive=False)
+
+def test_output_dir_creates_local_path(tmp_path, monkeypatch):
+    """output_dir() returns a usable per-question path when not in Colab."""
+    # Point ~/.irilab2026_outputs/ at a temp directory for this test.
+    monkeypatch.setenv("HOME", str(tmp_path))
+
+    from irilab2026 import output_dir
+
+    path = output_dir("r1_q1")
+
+    assert path.exists()
+    assert path.is_dir()
+    assert path.name == "r1_q1"
+    assert path.parent.name == ".irilab2026_outputs"
