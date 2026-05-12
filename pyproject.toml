@@ -42,6 +42,9 @@ dev = [
 Homepage = "https://github.com/geraldmc/irilab2026"
 Issues = "https://github.com/geraldmc/irilab2026/issues"
 
+[tool.setuptools]
+include-package-data = true
+
 [tool.setuptools.packages.find]
 include = ["irilab2026*"]
 exclude = ["tests*"]
