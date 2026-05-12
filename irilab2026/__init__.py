@@ -19,6 +19,7 @@ from .environment import (
 from .data import (
     load_atgenexpress,
     load_plantvillage_orientation,
+    tair_gaf_path,
 )
 
 __version__ = "0.1.0"
