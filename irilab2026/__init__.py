@@ -15,7 +15,6 @@ from .environment import (
     cache_dir,
     output_dir,
 )
-from .version import __version__
 
 from .data import (
     load_atgenexpress,
