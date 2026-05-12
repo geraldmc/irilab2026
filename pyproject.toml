@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "irilab2026"
-version = "0.1.0"
+version = "0.2.0"
 description = "Shared infrastructure for the iResearch Institute 2026 Virtual Lab notebooks."
 readme = "README.md"
 license = { file = "LICENSE" }
@@ -45,3 +45,10 @@ Issues = "https://github.com/geraldmc/irilab2026/issues"
 [tool.setuptools.packages.find]
 include = ["irilab2026*"]
 exclude = ["tests*"]
+
+[tool.setuptools.package-data]
+irilab2026 = ["data/*.gz", "data/*.obo"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["irilab2026*"]

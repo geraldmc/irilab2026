@@ -250,22 +250,41 @@ def load_plantvillage_orientation():
     }
 
 
+from importlib import resources
+from pathlib import Path
+
+
 def tair_gaf_path() -> Path:
-    """Return the path to the bundled TAIR GAF file (tair.gaf.gz).
+    """Return the filesystem path to the bundled TAIR GAF file.
 
-    This is the *Arabidopsis* gene-to-GO annotation file from the GO
-    Consortium, bundled with the library to avoid runtime download
-    failures (the GO Consortium's distribution server sometimes
-    returns 403 for programmatic access).
+    The TAIR GAF (Gene Association File) maps *Arabidopsis thaliana* AGI gene
+    identifiers to GO terms — the gene-to-GO mapping that `goatools` consumes
+    for functional enrichment. The file is gzipped (tair.gaf.gz).
 
-    Release date: <fill in the date you downloaded the file>.
+    The file is bundled with the library rather than downloaded at runtime
+    because the GO Consortium's distribution server (current.geneontology.org)
+    returns HTTP 403 for programmatic access from some networks, including
+    Colab in some sessions. Bundling guarantees reproducibility and avoids
+    a runtime failure mode.
+
+    See `irilab2026/data/README.md` for the source URL and release date of
+    the bundled version.
 
     Returns
     -------
     Path
-        Path to the bundled tair.gaf.gz file.
+        Filesystem path to `irilab2026/data/tair.gaf.gz`. The returned path
+        is suitable for passing to `gzip.open()` or any code expecting a
+        readable file path.
+
+    Examples
+    --------
+    >>> import gzip
+    >>> from irilab2026 import tair_gaf_path
+    >>> with gzip.open(tair_gaf_path(), 'rt') as f:
+    ...     first_line = f.readline()
     """
-    return resources.files("irilab2026") / "data" / "tair.gaf.gz"
+    return Path(str(resources.files("irilab2026") / "data" / "tair.gaf.gz"))
 
 # ---------------------------------------------------------------------------
 # Internal — single-GSE handling

@@ -31,4 +31,5 @@ __all__ = [
     "output_dir",
     "load_atgenexpress",
     "load_plantvillage_orientation",
+    "tair_gaf_path",  
 ]
