@@ -273,7 +273,7 @@ def tair_gaf_path() -> Path:
     Returns
     -------
     Path
-        Filesystem path to `irilab2026/data/tair.gaf.gz`. The returned path
+        Filesystem path to `irilab2026/reference/tair.gaf.gz`. The returned path
         is suitable for passing to `gzip.open()` or any code expecting a
         readable file path.
 
@@ -284,7 +284,7 @@ def tair_gaf_path() -> Path:
     >>> with gzip.open(tair_gaf_path(), 'rt') as f:
     ...     first_line = f.readline()
     """
-    return Path(str(resources.files("irilab2026") / "data" / "tair.gaf.gz"))
+    return Path(str(resources.files("irilab2026") / "reference" / "tair.gaf.gz"))
 
 # ---------------------------------------------------------------------------
 # Internal — single-GSE handling
