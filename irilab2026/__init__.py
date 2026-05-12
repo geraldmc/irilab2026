@@ -21,6 +21,8 @@ from .data import (
     load_plantvillage_orientation,
 )
 
+__version__ = "0.1.0"
+
 __all__ = [
     "setup",
     "is_colab",
