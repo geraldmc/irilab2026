@@ -29,5 +29,4 @@ __all__ = [
     "output_dir",
     "load_atgenexpress",
     "load_plantvillage_orientation",
-    "__version__",
 ]
