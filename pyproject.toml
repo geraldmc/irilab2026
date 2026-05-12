@@ -30,6 +30,7 @@ dependencies = [
     "seaborn>=0.12",
     "patsy>=1.0",
     "inmoose>=0.9",
+    "goatools>=1.0",
 ]
 
 [project.optional-dependencies]
