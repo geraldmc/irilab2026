@@ -22,7 +22,7 @@ from .data import (
     tair_gaf_path,
 )
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "setup",
