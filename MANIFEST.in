@@ -1,2 +1,2 @@
-include irilab2026/data/*.gz
-include irilab2026/data/*.obo
+include irilab2026/resources/*.gz
+include irilab2026/resources/*.obo
