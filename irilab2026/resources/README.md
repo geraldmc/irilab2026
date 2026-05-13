@@ -1,4 +1,4 @@
-# Reference data files
+# Resources data files
 
 Files in this directory are bundled with the `irilab2026` library to ensure
 reproducible analyses. Each file is documented below.

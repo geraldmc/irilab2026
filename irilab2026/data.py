@@ -27,24 +27,6 @@ import pandas as pd
 
 from irilab2026.environment import cache_dir
 
-# ----
-def tair_gaf_path() -> Path:
-    """Return the path to the bundled TAIR GAF file (tair.gaf.gz).
-
-    This is the *Arabidopsis* gene-to-GO annotation file from the GO
-    Consortium, bundled with the library to avoid runtime download
-    failures (the GO Consortium's distribution server sometimes
-    returns 403 for programmatic access).
-
-    Release date: <fill in the date you downloaded the file>.
-
-    Returns
-    -------
-    Path
-        Path to the bundled tair.gaf.gz file.
-    """
-    return resources.files("irilab2026") / "data" / "tair.gaf.gz"
-# ---- 
 # ---------------------------------------------------------------------------
 # Constants
 # ---------------------------------------------------------------------------
