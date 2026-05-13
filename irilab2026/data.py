@@ -249,7 +249,7 @@ def tair_gaf_path() -> Path:
     Colab in some sessions. Bundling guarantees reproducibility and avoids
     a runtime failure mode.
 
-    See `irilab2026/data/README.md` for the source URL and release date of
+    See `irilab2026/resources/README.md` for the source URL and release date of
     the bundled version.
 
     Returns
