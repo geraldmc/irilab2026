@@ -51,5 +51,5 @@ exclude = ["tests*"]
 where = ["."]
 
 [tool.setuptools.package-data]
-irilab2026 = ["reference/*.gz", "reference/*.obo"]
+irilab2026 = ["resources/*.gz", "resources/*.obo"]
 
