@@ -49,8 +49,7 @@ These are decided, not aspirational. Don't deviate without a reason.
 - **Notebook filenames:** numeric prefix in workflow order, then a short descriptive name — `01_deg_analysis.ipynb`, `02_core_overlap.ipynb`. Sorts correctly without thinking about it.
 - **Question folder names:** lowercase, hyphenated — `r1-q1/`, not `R1Q1/` or `r1_q1/`.
 - **Rationale orientation notebooks** sit as a sibling of the question folders (e.g. `notebooks/r1/r1_orientation.ipynb`), not nested in their own folder.
-- **Library promotion rule:** code shared by notebooks inside one question folder lives in that folder's `helpers.py`. It only graduates into `irilab2026/` after duplication across **three or more** notebooks in different folders. Don't pre-promote.
-- **Install line every notebook uses** is `pip install git+https://github.com/geraldmc/irilab2026.git@v0.1.0`. The tag in the install line must match `__version__` in `irilab2026/__init__.py` and `version` in `pyproject.toml`. Bump all three together when releasing.
+- **Install line every notebook uses** is `pip install git+https://github.com/geraldmc/irilab2026.git@main`. The tag in the install line is to the latest commeit in main. We defer proper versioning until reaching an acceptable milestone.
 
 ## Notebook pedagogy: unwrapped-then-wrapped
 
@@ -94,7 +93,6 @@ python -c "from irilab2026 import setup; setup()"
 
 These are pending choices. Don't silently default to one path; raise the question when it would first be needed.
 
-- **Sample metadata loader.** `load_atgenexpress()` returns probes-by-samples DataFrames with GSM IDs as columns; tissue, time-point, and replicate metadata is encoded in GSM titles but not surfaced. Whether to add a `load_atgenexpress_metadata()` companion to the library is undecided. Don't add it unprompted.
 - **Notebook source format.** Notebooks are currently authored as `.ipynb` directly. Whether to move to a jupytext-paired `.py` / `.ipynb` setup so source is reviewable in Git is undecided. Don't introduce jupytext unprompted.
 
 ## Cutting a data release
@@ -108,6 +106,38 @@ These are pending choices. Don't silently default to one path; raise the questio
 4. Update `_PV_*_URL` and `_PV_*_SHA256` in `irilab2026/data.py`
 5. Commit, push, smoke-test on a fresh Colab runtime
 
-## Project status (as of v0.1.0)
+## Project status (as of v0.2.0)
 
-The library exists with `setup()` and `load_atgenexpress()`. Notebook directories exist with READMEs but no `.ipynb` files yet. The first notebook to be drafted is `notebooks/r1/r1_orientation.ipynb`, followed by R1-Q1's four notebooks in workflow order. The orientation notebook is explicitly provisional — expect one structural revision after R1-Q1's analytical notebooks land and reveal what orientation actually needs to set up.
+The library has grown from setup-and-load-only to actively supporting R1-Q2 notebook
+drafting. Public API: `setup()`, `output_dir()`, `load_atgenexpress()`,
+`atgenexpress_metadata()` (added during R1-Q2 N0 drafting; AtGenExpress sample-level
+metadata parsed from cached SOFT files), and the unwrapped helpers
+`is_colab()`, `mount_google_drive()`, `has_gpu()`. Tests in `tests/` remain
+network-free and pass.
+
+**R1 notebooks.**
+
+- `r1_orientation.ipynb` — complete. [Verify against repo: post-R1-Q1 structural
+  revision was flagged in the v0.1.0 status note. Was it ever done?]
+- `r1-q1/` — all four notebooks complete and analytically closed:
+  `00_question_orientation.ipynb`, `01_deg_analysis.ipynb`, `02_core_overlap.ipynb`,
+  `03_consensus_compare.ipynb`. Remaining R1-Q1 deliverables (final paper,
+  presentation) live outside the notebook chain.
+- `r1-q2/` — in progress. `00_question_orientation.ipynb` complete (produces
+  filtered per-tissue matrices and `precommit.json`). `01_wgcna.ipynb` actively
+  drafting. `02_hub_identification.ipynb` and `03_comparison.ipynb` scoped but
+  not drafted.
+- `r1-q3/`, `r1-q4/` — not drafted. The Workflow / Considerations / References
+  pass applied to R1-Q1 and R1-Q2 question pages has not yet been applied to
+  these.
+
+**R2 notebooks.** None exist. Question pages live on Notion. R2 drafting is
+deferred until R1 lands.
+
+**Distribution.** The library is on GitHub but not yet published to PyPI. Until
+publication, the canonical install for the program is
+`pip install git+https://github.com/geraldmc/irilab2026.git@vX.Y.Z` pinned to a
+tagged release. Active development uses the iteration shape with
+`--upgrade --force-reinstall` against `@main`; this is for development only and
+should not appear in student-facing notebook setup cells once a release is cut.
+
