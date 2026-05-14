@@ -63,3 +63,19 @@ def test_validate_chip_counts_raises_on_mismatch():
     df = pd.DataFrame(rows)
     with pytest.raises(RuntimeError, match="cold: expected 24, got 5"):
         _validate_chip_counts(df, requested=["cold"])
+
+def test_parquet_roundtrip_is_available(tmp_path):
+    """
+    The project's data loaders cache via pandas parquet I/O. Pandas
+    doesn't bundle a parquet engine, so a missing pyarrow (or
+    fastparquet) dependency would surface as an ImportError on first
+    cache write in any environment that doesn't already have one
+    installed — Colab masks the issue, fresh venvs do not.
+    """
+    import pandas as pd
+
+    df = pd.DataFrame({"a": [1, 2, 3], "b": ["x", "y", "z"]})
+    cache_file = tmp_path / "smoke.parquet"
+    df.to_parquet(cache_file)
+    roundtripped = pd.read_parquet(cache_file)
+    pd.testing.assert_frame_equal(df, roundtripped)
