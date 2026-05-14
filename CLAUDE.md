@@ -29,7 +29,7 @@ If asked to produce any of the above, ask before adding it to the repo. The defa
 - Conversational dialogue. Talk through changes before making them, especially anything touching multiple files or affecting notebook structure.
 - Work backwards from the desired outcome to the implementation, not the other way around. State the outcome first.
 - Plain English. No private jargon. If a term needs defining, define it.
-- Reproducibility matters. Pinned versions, deterministic seeds where relevant, cache paths over ad-hoc downloads, install from a tagged release rather than `main`.
+- Reproducibility matters. Pinned versions, deterministic seeds where relevant, cache paths over ad-hoc downloads. Notebooks currently install from `@main` because no milestone release is tagged yet — see **Distribution** under Project status for the policy and the eventual move to pinned tags.
 - Python is the working language.
 
 ## Glossary
@@ -49,7 +49,7 @@ These are decided, not aspirational. Don't deviate without a reason.
 - **Notebook filenames:** numeric prefix in workflow order, then a short descriptive name — `01_deg_analysis.ipynb`, `02_core_overlap.ipynb`. Sorts correctly without thinking about it.
 - **Question folder names:** lowercase, hyphenated — `r1-q1/`, not `R1Q1/` or `r1_q1/`.
 - **Rationale orientation notebooks** sit as a sibling of the question folders (e.g. `notebooks/r1/r1_orientation.ipynb`), not nested in their own folder.
-- **Install line every notebook uses** is `pip install git+https://github.com/geraldmc/irilab2026.git@main`. The tag in the install line is to the latest commeit in main. We defer proper versioning until reaching an acceptable milestone.
+- **Install line every notebook currently uses** is `pip install git+https://github.com/geraldmc/irilab2026.git@main`. This pins to the latest commit on `main`; proper versioned tags are deferred until a milestone release. This is provisional — see **Distribution** under Project status for the full policy and what changes once a release is cut.
 
 ## Notebook pedagogy: unwrapped-then-wrapped
 
@@ -94,6 +94,7 @@ python -c "from irilab2026 import setup; setup()"
 These are pending choices. Don't silently default to one path; raise the question when it would first be needed.
 
 - **Notebook source format.** Notebooks are currently authored as `.ipynb` directly. Whether to move to a jupytext-paired `.py` / `.ipynb` setup so source is reviewable in Git is undecided. Don't introduce jupytext unprompted.
+- **`r1_orientation.ipynb` structural revision.** The v0.1.0 status note flagged that the orientation notebook would need one structural revision after R1-Q1's analytical notebooks landed and revealed what orientation actually needs to set up. R1-Q1 is now complete; the revision has not been done. Decide whether it is still needed and, if so, scope it.
 
 ## Cutting a data release
 
@@ -106,6 +107,10 @@ These are pending choices. Don't silently default to one path; raise the questio
 4. Update `_PV_*_URL` and `_PV_*_SHA256` in `irilab2026/data.py`
 5. Commit, push, smoke-test on a fresh Colab runtime
 
+## Cutting a library release
+
+No library release has been cut yet — versioning is deferred until a milestone (see **Distribution** below). When the first release is cut, this section should document the procedure. At minimum it needs to cover: choosing the version number, keeping `__version__` in `irilab2026/__init__.py` and `version` in `pyproject.toml` in sync, tagging the release, and updating the install line in notebooks from `@main` to the pinned tag. Until then, treat this as TBD and raise it when the milestone is reached.
+
 ## Project status (as of v0.2.0)
 
 The library has grown from setup-and-load-only to actively supporting R1-Q2 notebook
@@ -117,8 +122,8 @@ network-free and pass.
 
 **R1 notebooks.**
 
-- `r1_orientation.ipynb` — complete. [Verify against repo: post-R1-Q1 structural
-  revision was flagged in the v0.1.0 status note. Was it ever done?]
+- `r1_orientation.ipynb` — drafted, but the post-R1-Q1 structural revision flagged
+  in the v0.1.0 status note has not been done (see Open decisions).
 - `r1-q1/` — all four notebooks complete and analytically closed:
   `00_question_orientation.ipynb`, `01_deg_analysis.ipynb`, `02_core_overlap.ipynb`,
   `03_consensus_compare.ipynb`. Remaining R1-Q1 deliverables (final paper,
@@ -134,10 +139,11 @@ network-free and pass.
 **R2 notebooks.** None exist. Question pages live on Notion. R2 drafting is
 deferred until R1 lands.
 
-**Distribution.** The library is on GitHub but not yet published to PyPI. Until
-publication, the canonical install for the program is
-`pip install git+https://github.com/geraldmc/irilab2026.git@vX.Y.Z` pinned to a
-tagged release. Active development uses the iteration shape with
-`--upgrade --force-reinstall` against `@main`; this is for development only and
-should not appear in student-facing notebook setup cells once a release is cut.
-
+**Distribution.** The library is on GitHub but not yet published to PyPI. The
+eventual policy: once a milestone release is cut, student-facing notebooks install
+from a pinned tag, `pip install git+https://github.com/geraldmc/irilab2026.git@vX.Y.Z`,
+and `@main` is reserved for active development (the iteration shape with
+`--upgrade --force-reinstall`). **No milestone release has been tagged yet**,
+however, so until one is, every notebook — student-facing included — installs from
+`@main`. The switch to `@vX.Y.Z` happens when the first library release is cut
+(see **Cutting a library release**).
