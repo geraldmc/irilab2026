@@ -14,6 +14,7 @@ should not assume "all nine AtGenExpress stresses" are present.
 
 from __future__ import annotations
 import hashlib
+import re
 import tarfile
 import urllib.request
 from importlib import resources
@@ -111,6 +112,93 @@ def load_atgenexpress(
         gse_id = STRESS_TO_GSE[stress]
         out[stress] = _load_one_gse(gse_id, force_download=force_download)
     return out
+
+# ---------------------------------------------------------------------------
+# Public — sample metadata
+# ---------------------------------------------------------------------------
+
+def atgenexpress_metadata(
+    stresses: Iterable[str] | None = None,
+    force_download: bool = False,
+) -> pd.DataFrame:
+    """
+    Load sample-level metadata for the AtGenExpress abiotic stress series.
+
+    Parses tissue, time point, and replicate number from GEO sample titles
+    for the AtGenExpress accessions (GSE5620–GSE5628). Stress is assigned
+    from the GSE the sample belongs to. The parsed metadata is cached as a
+    parquet file after the first build; subsequent calls read from cache.
+
+    On a cache miss, this function uses the SOFT files that
+    ``load_atgenexpress`` has already downloaded. If a SOFT file is not yet
+    on disk for a requested stress, ``load_atgenexpress`` is called first
+    to fetch it.
+
+    Parameters
+    ----------
+    stresses : iterable of str, optional
+        Subset of stress names to include. Default: all nine conditions.
+    force_download : bool, default False
+        If True, force-re-download the SOFT files and re-parse from
+        scratch, overwriting any cached metadata.
+
+    Returns
+    -------
+    pandas.DataFrame
+        Indexed by GSM ID. Columns:
+
+        - ``stress`` (str): one of the AtGenExpress condition names.
+        - ``tissue`` (str): ``'shoot'`` or ``'root'``.
+        - ``time_h`` (float): time point in hours.
+        - ``replicate`` (int): replicate number.
+        - ``gse`` (str): the GEO accession the sample came from.
+
+    Raises
+    ------
+    ValueError
+        If any requested stress name is unknown.
+    RuntimeError
+        If the parsed per-stress chip counts do not match the canonical
+        values from the AtGenExpress design (Hahn 2013 §4.1). A mismatch
+        signals either drift in GEO content or a regex regression; both
+        are conditions in which silent continuation is unsafe.
+
+    Notes
+    -----
+    AtGenExpress sample titles follow the convention
+    ``AtGen_6-NNNN_Stress-Tissue-TimePoint_RepN``, e.g.
+    ``AtGen_6-0011_Control-Shoots-0h_Rep1``. The parser is the title-only
+    parser verified in the R1-Q1 Week 2 walkthrough.
+
+    Examples
+    --------
+    >>> from irilab2026 import atgenexpress_metadata
+    >>> meta = atgenexpress_metadata(stresses=['cold'])
+    >>> meta.shape
+    (24, 5)
+    >>> sorted(meta.columns.tolist())
+    ['gse', 'replicate', 'stress', 'time_h', 'tissue']
+    """
+    if stresses is None:
+        stresses = ALL_STRESSES
+
+    requested = list(stresses)
+    _validate_stress_names(requested)
+
+    cache_file = cache_dir() / "atgenexpress_metadata.parquet"
+
+    # Cache hit only counts if every requested stress is already in the
+    # cached frame. A prior call with a smaller subset is not a hit for a
+    # larger request.
+    if cache_file.exists() and not force_download:
+        cached = pd.read_parquet(cache_file)
+        if set(requested).issubset(set(cached["stress"].unique())):
+            return cached[cached["stress"].isin(requested)].copy()
+
+    metadata = _build_atgenexpress_metadata(requested, force_download=force_download)
+    _validate_chip_counts(metadata, requested)
+    metadata.to_parquet(cache_file)
+    return metadata
 
 # --- PlantVillage orientation loader ---
 
@@ -338,3 +426,152 @@ def _validate_stress_names(stresses: list[str]) -> None:
             f"Unknown stress name(s): {unknown}. "
             f"Valid names: {list(ALL_STRESSES)}."
         )
+
+# ---------------------------------------------------------------------------
+# Internal — sample-metadata parsing
+# ---------------------------------------------------------------------------
+
+
+# AtGenExpress canonical per-stress chip counts. Sourced from Hahn 2013 §4.1
+# and verified against the Pass 1 reality-check.
+_EXPECTED_CHIP_COUNTS: dict[str, int] = {
+    "control": 36,
+    "cold": 24,
+    "osmotic": 24,
+    "salt": 24,
+    "drought": 28,
+    "genotoxic": 24,
+    "uv_b": 28,
+    "wounding": 28,
+    "heat": 32,
+}
+
+
+# Time point: matches '0h', '0.25h', '0.5 h', '30 min', etc.
+#
+# Python's \b does not trigger before an underscore (underscore is a word
+# character in Python regex), so a naive \b after the unit fails on
+# AtGenExpress titles like '0.25h_Rep1'. The explicit lookahead handles
+# end-of-string, whitespace, underscore, and common delimiters.
+_TIME_RE = re.compile(
+    r"(\d+(?:\.\d+)?)\s*"
+    r"(hours?|hrs?|h|minutes?|mins?|m)"
+    r"(?=$|[\s_\-,;|/])",
+    re.IGNORECASE,
+)
+
+
+# Replicate: matches 'Rep1', 'replicate 2', '_R1', etc.
+_REP_RE = re.compile(
+    r"(?:replicate|rep|biological\s*replicate)\D*?(\d+)"
+    r"|_R(\d+)\b",
+    re.IGNORECASE,
+)
+
+
+def _extract_tissue(title: str) -> str | None:
+    """Return 'shoot' or 'root', or None if the title is unclear."""
+    t = title.lower()
+    if "root" in t:
+        return "root"
+    if any(w in t for w in ("shoot", "leaf", "leaves", "rosette", "aerial")):
+        return "shoot"
+    return None
+
+
+def _extract_time(title: str) -> float | None:
+    """Return the time point in hours (minutes converted), or None."""
+    m = _TIME_RE.search(title)
+    if not m:
+        return None
+    value = float(m.group(1))
+    unit = m.group(2).lower()
+    return value / 60.0 if unit.startswith("m") else value
+
+
+def _extract_rep(title: str) -> int | None:
+    """Return the replicate number as an int, or None."""
+    m = _REP_RE.search(title)
+    if not m:
+        return None
+    for group in m.groups():
+        if group:
+            return int(group)
+    return None
+
+
+def _build_atgenexpress_metadata(
+    stresses: list[str],
+    force_download: bool = False,
+) -> pd.DataFrame:
+    """
+    Parse sample metadata from the cached SOFT files.
+
+    For each requested stress, ensure the corresponding SOFT file is on
+    disk (via ``_load_one_gse``, which is a no-op when the GSE is already
+    cached), then read the SOFT file locally with GEOparse and parse each
+    GSM's title into structured fields.
+    """
+    import GEOparse
+
+    rows = []
+    soft_dir = cache_dir() / "_soft"
+
+    for stress in stresses:
+        gse_id = STRESS_TO_GSE[stress]
+
+        # Side-effect call: ensures the SOFT file is in soft_dir. The
+        # returned expression DataFrame is unused here.
+        _load_one_gse(gse_id, force_download=force_download)
+
+        # GEOparse names SOFT files <GSE>_family.soft.gz, but glob to be
+        # robust to any future naming change.
+        soft_candidates = list(soft_dir.glob(f"{gse_id}*.soft.gz"))
+        if not soft_candidates:
+            raise RuntimeError(
+                f"Expected a SOFT file for {gse_id} in {soft_dir} after "
+                f"_load_one_gse, but found none. Cache may be in a bad state; "
+                f"try force_download=True."
+            )
+
+        gse = GEOparse.get_GEO(filepath=str(soft_candidates[0]), silent=True)
+
+        for gsm_id, gsm in gse.gsms.items():
+            title = " ".join(gsm.metadata.get("title", []))
+            rows.append({
+                "GSM": gsm_id,
+                "stress": stress,
+                "tissue": _extract_tissue(title),
+                "time_h": _extract_time(title),
+                "replicate": _extract_rep(title),
+                "gse": gse_id,
+            })
+
+    return pd.DataFrame(rows).set_index("GSM")
+
+
+def _validate_chip_counts(metadata: pd.DataFrame, requested: list[str]) -> None:
+    """
+    Verify that per-stress chip counts match the canonical values.
+
+    A mismatch means either GEO has drifted from what was deposited in
+    2007, or the regex parser has regressed. Both are conditions where
+    silent continuation produces analyses on the wrong data.
+    """
+    observed = metadata.groupby("stress").size().to_dict()
+    mismatches = []
+    for stress in requested:
+        expected = _EXPECTED_CHIP_COUNTS[stress]
+        actual = observed.get(stress, 0)
+        if actual != expected:
+            mismatches.append((stress, expected, actual))
+
+    if mismatches:
+        lines = ["Chip count mismatch against AtGenExpress canonical values:"]
+        for stress, expected, actual in mismatches:
+            lines.append(f"  {stress}: expected {expected}, got {actual}")
+        lines.append(
+            "This suggests either GEO content has changed, or the title "
+            "parser has regressed."
+        )
+        raise RuntimeError("\n".join(lines))

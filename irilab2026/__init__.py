@@ -18,6 +18,7 @@ from .environment import (
 
 from .data import (
     load_atgenexpress,
+    atgenexpress_metadata,           # <-- new
     load_plantvillage_orientation,
     tair_gaf_path,
 )
@@ -31,6 +32,7 @@ __all__ = [
     "has_gpu",
     "output_dir",
     "load_atgenexpress",
+    "atgenexpress_metadata",         # <-- new
     "load_plantvillage_orientation",
     "tair_gaf_path",  
 ]
