@@ -31,6 +31,7 @@ dependencies = [
     "patsy>=1.0",
     "inmoose>=0.9",
     "goatools>=1.6.5",
+    "pyarrow>=14",
 ]
 
 [project.optional-dependencies]
