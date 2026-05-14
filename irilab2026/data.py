@@ -19,6 +19,8 @@ import tarfile
 import urllib.request
 from importlib import resources
 from pathlib import Path
+
+import GEOparse           # <-- new
 import pandas as pd
 
 from pathlib import Path
@@ -382,7 +384,6 @@ def _download_and_build(gse_id: str) -> pd.DataFrame:
     Download a GSE from GEO via GEOparse and build a probes-by-samples
     expression matrix from its constituent samples.
     """
-    import GEOparse
 
     # GEOparse downloads the SOFT file to a temp dir and parses it.
     # The destdir argument keeps downloads in our cache so subsequent
@@ -512,7 +513,6 @@ def _build_atgenexpress_metadata(
     cached), then read the SOFT file locally with GEOparse and parse each
     GSM's title into structured fields.
     """
-    import GEOparse
 
     rows = []
     soft_dir = cache_dir() / "_soft"
