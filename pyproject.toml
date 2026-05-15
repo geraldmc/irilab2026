@@ -32,6 +32,7 @@ dependencies = [
     "goatools>=1.6.5",
     "pyarrow>=14",
     "PyWGCNA==2.2.1",
+    "scikit-learn>=1.0",
 ]
 
 [project.optional-dependencies]
