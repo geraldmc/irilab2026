@@ -70,6 +70,7 @@ Mentees are high school and early college students. Assume no prior Python beyon
 - **`load_atgenexpress()` deliberately excludes the ninth AtGenExpress condition (oxidative).** Oxidative is TAIR/NASCArrays-only and not on GEO. Don't add it. The docstring and `data.py` module docstring explain why.
 - **The GSE→stress mapping in `data.py` was verified against GEO accession titles.** Don't change it without re-verifying against GEO directly — a wrong mapping silently produces analyses on the wrong stress.
 - **Cache directory** is `My Drive/irilab2026_cache/` in Colab (Drive mounted), `/content/irilab2026_cache/` in Colab without Drive (fallback only), `~/.irilab2026_cache/` locally. The `_soft/` subdirectory inside it is GEOparse's SOFT-file cache.
+- **`probe_to_agi()` returns a dict, not a Series.** Deliberate, for parity with the R1-Q1 inline pattern and to simplify testing. Don't switch return types without checking call sites; `df.index.map(probe_to_agi)` and `df['probe_col'].map(probe_to_agi)` both work with the dict form.
 
 ## Commands
 

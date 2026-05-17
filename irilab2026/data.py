@@ -202,6 +202,105 @@ def atgenexpress_metadata(
     metadata.to_parquet(cache_file)
     return metadata
 
+# ---------------------------------------------------------------------------
+# Public — probe-to-AGI mapping (2026-05-16 addition)
+# ---------------------------------------------------------------------------
+
+def probe_to_agi(force_download: bool = False) -> dict[str, str]:
+    """
+    Build a mapping from Affymetrix ATH1 probe IDs to AGI gene identifiers.
+
+    The mapping comes from the GPL198 annotation table, which GEOparse
+    fetches from GEO on first call and caches locally afterward. AGI
+    (Arabidopsis Genome Initiative) codes are the standard locus
+    identifiers in TAIR and other Arabidopsis resources; the form is
+    ``AT`` followed by a chromosome number and a five-digit locus number,
+    for example ``AT5G42570``.
+
+    The returned dict has roughly 21,000 entries out of the 22,810 probes
+    on the ATH1 array. Two groups are not included:
+
+    1. **Probes targeting more than one locus.** The annotation lists the
+       targets separated by ``' /// '`` (for example,
+       ``'AT4G25490 /// AT4G25470'``). The first locus is taken as the
+       probe's primary target. Multi-locus probes are a small fraction of
+       the array, but they exist and need a deterministic rule.
+    2. **Probes with no AGI annotation.** This category includes the
+       Affymetrix control probes (the ``AFFX-`` prefixed set) and a small
+       number of design-stage probes that were never matched to a locus.
+       Both groups are dropped.
+
+    Parameters
+    ----------
+    force_download : bool, default False
+        If True, delete any cached GPL198 file and re-fetch from GEO.
+        Useful if the cached file is suspected to be corrupted.
+
+    Returns
+    -------
+    dict[str, str]
+        Keys are probe IDs (for example, ``'249264_s_at'``); values are
+        AGI codes in upper case (for example, ``'AT5G42570'``).
+
+    Notes
+    -----
+    The GPL198 SOFT file is roughly 7 MB. The first call downloads it
+    (a few seconds on a typical connection); subsequent calls read from
+    the local cache directory ``iri.cache_dir()``.
+
+    Examples
+    --------
+    >>> probe_to_agi = iri.probe_to_agi()
+    >>> probe_to_agi['249264_s_at']
+    'AT5G42570'
+
+    Translating a column of probe IDs in a DataFrame indexed by probe:
+
+    >>> hubs['agi_id'] = hubs.index.map(probe_to_agi)
+    """
+    destdir = cache_dir()
+
+    if force_download:
+        # GEOparse names GPL annotation files like ``GPL198.annot.gz`` or
+        # ``GPL198_family.soft.gz`` depending on which path it took. Glob
+        # to be robust to either.
+        for soft_path in Path(destdir).glob("GPL198*"):
+            soft_path.unlink()
+
+    gpl = GEOparse.get_GEO(geo='GPL198', destdir=str(destdir), silent=True)
+    return _build_probe_to_agi_dict(gpl.table)
+
+
+# ---------------------------------------------------------------------------
+# Private helpers
+# ---------------------------------------------------------------------------
+
+def _build_probe_to_agi_dict(gpl_table: pd.DataFrame) -> dict[str, str]:
+    """
+    Build the probe-to-AGI dict from a GPL198 annotation table.
+
+    Separated from ``probe_to_agi`` so the parsing logic can be tested
+    against a synthetic table without a network fetch. Expects the input
+    to have ``'ID'`` and ``'AGI'`` columns.
+
+    Multi-locus probes get their first locus; probes with empty or NaN
+    AGI annotations are dropped.
+    """
+    table = gpl_table[['ID', 'AGI']].dropna()
+
+    first_locus = (
+        table['AGI']
+        .astype(str)
+        .str.split(' /// ')
+        .str[0]
+        .str.strip()
+        .str.upper()
+    )
+
+    mask = first_locus != ''
+    return dict(zip(table.loc[mask, 'ID'].astype(str), first_locus[mask]))
+
+
 # --- PlantVillage orientation loader ---
 
 # Pinned release artifact. The data version tag is separate from the library
