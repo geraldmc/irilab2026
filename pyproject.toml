@@ -33,6 +33,9 @@ dependencies = [
     "pyarrow>=14",
     "PyWGCNA==2.2.1",
     "scikit-learn>=1.0",
+    "torch>=2.0",
+    "torchvision>=0.15",
+    "pillow>=10.0",
 ]
 
 [project.optional-dependencies]

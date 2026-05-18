@@ -20,13 +20,13 @@ import urllib.request
 from importlib import resources
 from pathlib import Path
 
+from PIL import Image
+from torch.utils.data import Dataset
+
 import GEOparse           # <-- new
 import pandas as pd
 
-from pathlib import Path
 from typing import Iterable
-
-import pandas as pd
 
 from irilab2026.environment import cache_dir
 
@@ -301,7 +301,7 @@ def _build_probe_to_agi_dict(gpl_table: pd.DataFrame) -> dict[str, str]:
     return dict(zip(table.loc[mask, 'ID'].astype(str), first_locus[mask]))
 
 
-# --- PlantVillage orientation loader ---
+# --- PlantVillage loaders ---
 
 # Pinned release artifact. The data version tag is separate from the library
 # version on purpose — tarball updates shouldn't force library releases,
@@ -422,16 +422,102 @@ def load_plantvillage_orientation():
         "sample_dir": extracted,
     }
 
-    return {
-        "manifest": manifest,
-        "sample_paths": sample_paths,
-        "sample_dir": extracted,
-    }
+
+def load_plantvillage():
+    """Load the full PlantVillage dataset (~54,000 images, ~1.5 GB).
+
+    Downloads the pinned tarball if not already cached, verifies its
+    SHA256, extracts it, and returns a DataFrame with one row per image.
+    For a small structural overview of the dataset, use
+    load_plantvillage_orientation() instead.
+
+    Returns
+    -------
+    pandas.DataFrame
+        One row per image. Columns:
+        - image_path   (str)  : absolute path to the image file
+        - class_label  (str)  : e.g. "Apple___Apple_scab"
+        - class_idx    (int)  : 0-indexed, alphabetical over class_label
+        - host         (str)  : e.g. "Apple"
+        - disease      (str)  : e.g. "Apple_scab" or "healthy"
+        - split        (str)  : "train" or "test"
+        - leaf_id      (str)  : groups images from the same physical leaf
+        - leaf_grouped (bool) : True if leaf_id reflects upstream grouping,
+                                False if it's synthetic (one per image)
+    """
+    cache = cache_dir()
+    extracted = cache / "plantvillage_full"
+    tarball = cache / "plantvillage_full.tar.gz"
+    metadata_path = extracted / "metadata.csv"
+
+    if not metadata_path.exists():
+        need_download = (
+            not tarball.exists()
+            or _sha256_of_file(tarball) != _PV_FULL_SHA256
+        )
+        if need_download:
+            _download_and_verify(_PV_FULL_URL, _PV_FULL_SHA256, tarball)
+        print(f"Extracting to {extracted} ...")
+        with tarfile.open(tarball, "r:gz") as tf:
+            tf.extractall(cache, filter="data")
+
+    if not metadata_path.exists():
+        raise RuntimeError(
+            f"Expected metadata file at {metadata_path} after extraction. "
+            f"The tarball may be malformed."
+        )
+
+    metadata = pd.read_csv(metadata_path)
+
+    # Resolve image_path from "relative to wrapper directory" to "absolute
+    # path on disk." metadata.csv stores paths like
+    # "color/Apple___Apple_scab/00075aa8...JPG"; the returned DataFrame
+    # has them rooted at the cache extraction location.
+    metadata["image_path"] = metadata["image_path"].apply(
+        lambda rel: str(extracted / rel)
+    )
+
+    return metadata
 
 
-from importlib import resources
-from pathlib import Path
+class PlantVillageDataset(Dataset):
+    """PyTorch Dataset wrapper around a PlantVillage metadata DataFrame.
 
+    Pass a DataFrame returned by load_plantvillage() or any subset of it
+    (for example, filtered by 'split' or 'host'). Each __getitem__ call
+    opens the image lazily, applies an optional transform, and returns a
+    (image, class_idx) tuple.
+
+    Parameters
+    ----------
+    metadata : pandas.DataFrame
+        Must contain at least 'image_path' (absolute path) and 'class_idx'
+        (int) columns.
+    transform : callable, optional
+        torchvision-style transform applied to the loaded PIL Image.
+        Default None returns the raw PIL Image. For a ResNet50 baseline,
+        pass the standard ImageNet preprocessing pipeline.
+
+    Notes
+    -----
+    Indexing uses .iloc (positional), so DataFrames with non-contiguous
+    indices — for example, the result of df[df["split"] == "train"] —
+    work without needing reset_index().
+    """
+
+    def __init__(self, metadata, transform=None):
+        self.metadata = metadata
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.metadata)
+
+    def __getitem__(self, idx):
+        row = self.metadata.iloc[idx]
+        image = Image.open(row["image_path"]).convert("RGB")
+        if self.transform is not None:
+            image = self.transform(image)
+        return image, int(row["class_idx"])
 
 def tair_gaf_path() -> Path:
     """Return the filesystem path to the bundled TAIR GAF file.
