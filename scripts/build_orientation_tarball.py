@@ -5,7 +5,7 @@ samples a small deterministic subset (~5 images per class), writes a
 manifest with full-dataset class counts, and tars the result.
 
 The output tarball is uploaded as a release asset on the irilab2026 repo
-(release tag: data-vX.Y.Z) and its SHA256 is pinned in
+(release tag: data-orientation-vX.Y.Z) and its SHA256 is pinned in
 irilab2026/data.py as _PV_ORIENTATION_SHA256.
 
 Usage:
@@ -224,7 +224,7 @@ def main():
     print("Next steps:")
     print(f"  1. Update _PV_ORIENTATION_SHA256 in irilab2026/data.py to:")
     print(f"     {digest}")
-    print(f"  2. Cut a release tagged 'data-vX.Y.Z' on the irilab2026 repo")
+    print(f"  2. Cut a release tagged 'data-orientation-vX.Y.Z' on the irilab2026 repo")
     print(f"  3. Attach {tarball_path.name} as a release asset")
     print(f"  4. Update _PV_ORIENTATION_URL in irilab2026/data.py to match")
 

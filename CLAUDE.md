@@ -99,13 +99,23 @@ These are pending choices. Don't silently default to one path; raise the questio
 
 ## Cutting a data release
 
-1. Build the tarball: `python scripts/build_orientation_tarball.py`
+Data releases are tagged per product, not as a single series. Existing products
+and their tag prefixes:
+
+- Orientation tarball — `data-orientation-vX.Y.Z`
+- PlantVillage full image dataset — `data-pv-full-vX.Y.Z`
+- PlantDoc image dataset — `data-pd-vX.Y.Z`
+- PlantVillage pre-extracted features (deferred) — `data-pv-features-vX.Y.Z`
+
+Steps for any release:
+
+1. Build the tarball: `python scripts/build_<product>_tarball.py`
 2. Note the SHA256 from the script's output box
 3. Cut the release on GitHub:
-   - Tag: `data-vX.Y.Z` (note the `data-` prefix)
+   - Tag: per-product, as above (always with the `data-` prefix and a product qualifier)
    - Drag the tarball into Assets
    - **Click "Publish release," not "Save draft"** (drafts are not publicly downloadable)
-4. Update `_PV_*_URL` and `_PV_*_SHA256` in `irilab2026/data.py`
+4. Update the matching `_PV_*_URL` / `_PV_*_SHA256` (or `_PD_*_URL` / `_PD_*_SHA256`) in `irilab2026/data.py`
 5. Commit, push, smoke-test on a fresh Colab runtime
 
 ## Cutting a library release

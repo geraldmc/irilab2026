@@ -308,7 +308,7 @@ def _build_probe_to_agi_dict(gpl_table: pd.DataFrame) -> dict[str, str]:
 # and library patches shouldn't invalidate cached tarballs.
 _PV_ORIENTATION_URL = (
     "https://github.com/geraldmc/irilab2026/releases/download/"
-    "data-v0.1.0/plantvillage_orientation.tar.gz"
+    "data-orientation-v0.1.0/plantvillage_orientation.tar.gz"
 )
 _PV_ORIENTATION_SHA256 = (
     "7cc593e009d3ae45ffc3928eb0fea1929b1c6f5220a9c62bd02ac5ccc5b360c7"
