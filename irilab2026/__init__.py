@@ -18,9 +18,11 @@ from .environment import (
 
 from .data import (
     load_atgenexpress,
-    atgenexpress_metadata,           # <-- new
-    probe_to_agi,                    # <-- new
+    atgenexpress_metadata,
+    probe_to_agi,
     load_plantvillage_orientation,
+    load_plantvillage,
+    PlantVillageDataset,
     tair_gaf_path,
 )
 
@@ -33,8 +35,10 @@ __all__ = [
     "has_gpu",
     "output_dir",
     "load_atgenexpress",
-    "atgenexpress_metadata",         # <-- new
-    "probe_to_agi",                  # <-- new
+    "atgenexpress_metadata",
+    "probe_to_agi",
     "load_plantvillage_orientation",
     "tair_gaf_path",  
+    "load_plantvillage",
+    "PlantVillageDataset",
 ]
