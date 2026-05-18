@@ -314,6 +314,14 @@ _PV_ORIENTATION_SHA256 = (
     "7cc593e009d3ae45ffc3928eb0fea1929b1c6f5220a9c62bd02ac5ccc5b360c7"
 )
 
+_PV_FULL_URL = (
+    "https://github.com/geraldmc/irilab2026/releases/download/"
+    "data-pv-full-v0.1.0/plantvillage_full.tar.gz"
+)
+_PV_FULL_SHA256 = (
+    "656a9e32c3803721ff6fb99f619903b45455c5950174554e6b9dae263d3e1be4"
+)
+
 
 def _sha256_of_file(path):
     h = hashlib.sha256()
