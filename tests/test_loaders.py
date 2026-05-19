@@ -251,3 +251,133 @@ def test_load_plantvillage_force_download():
     )
     assert isinstance(metadata, pd.DataFrame)
     assert len(metadata) > 0
+
+# ---------------------------------------------------------------------------
+# load_plantdoc and PlantDocDataset (HF Hub flow)
+# ---------------------------------------------------------------------------
+
+
+def test_load_plantdoc_top_level_export():
+    """The loader is exposed at the top level of the package."""
+    assert hasattr(irilab2026, "load_plantdoc"), (
+        "load_plantdoc is not exported from irilab2026. "
+        "Check irilab2026/__init__.py."
+    )
+
+
+def test_plantdoc_dataset_top_level_export():
+    """The Dataset class is exposed at the top level of the package."""
+    assert hasattr(irilab2026, "PlantDocDataset"), (
+        "PlantDocDataset is not exported from irilab2026. "
+        "Check irilab2026/__init__.py."
+    )
+
+
+def test_load_plantdoc_unknown_variant_raises():
+    """Bad variant names raise ValueError before any network call."""
+    with pytest.raises(ValueError, match="Unknown variant"):
+        irilab2026.load_plantdoc(variant="cropped")
+
+
+def test_load_plantdoc_returns_expected_shape():
+    """End-to-end (tiny variant): fetch from HF, return (metadata_df, hf_dataset).
+
+    Uses the tiny variant to keep CI fast (~50 MB download on first run).
+    The full-variant equivalent is test_load_plantdoc_default_variant_is_full.
+    """
+    result = irilab2026.load_plantdoc(variant="tiny")
+
+    # Returns a 2-tuple
+    assert isinstance(result, tuple) and len(result) == 2
+    metadata, hf_dataset = result
+
+    # Metadata is a DataFrame with the seven non-image columns
+    assert isinstance(metadata, pd.DataFrame)
+
+    expected_cols = {
+        "class_label", "class_idx",
+        "host", "disease", "is_healthy",
+        "split", "filename",
+    }
+    assert set(metadata.columns) == expected_cols, (
+        f"Column set mismatch. Got {set(metadata.columns)}, "
+        f"expected {expected_cols}."
+    )
+
+    # Tiny variant is min(3, available) per class per split.
+    # 27 non-orphan classes × 3 × 2 splits = 162, + 2 orphan train = 164
+    assert 150 <= len(metadata) <= 180, (
+        f"Expected ~164 rows for tiny variant, got {len(metadata)}. "
+        f"The HF dataset may have been re-built with a different subsample size."
+    )
+
+    # HF Dataset length matches metadata
+    assert len(hf_dataset) == len(metadata)
+
+
+def test_load_plantdoc_content():
+    """Spot-check column dtypes, class count, split values, and the HF Dataset's
+    image column on the tiny variant."""
+    metadata, hf_dataset = irilab2026.load_plantdoc(variant="tiny")
+
+    # class_idx is integer-typed
+    assert pd.api.types.is_integer_dtype(metadata["class_idx"]), (
+        f"class_idx should be integer dtype, got {metadata['class_idx'].dtype}."
+    )
+
+    # is_healthy is boolean-typed
+    assert pd.api.types.is_bool_dtype(metadata["is_healthy"]), (
+        f"is_healthy should be bool dtype, got {metadata['is_healthy'].dtype}."
+    )
+
+    # 28 distinct classes (preserves the orphan)
+    assert metadata["class_label"].nunique() == 28, (
+        f"Expected 28 classes, got {metadata['class_label'].nunique()}."
+    )
+
+    # split takes only the two expected values
+    assert set(metadata["split"].unique()) == {"train", "test"}
+
+    # The HF Dataset's image column returns PIL Images (not bytes).
+    first_image = hf_dataset[0]["image"]
+    assert isinstance(first_image, Image.Image), (
+        f"Expected hf_dataset[0]['image'] to be a PIL Image, "
+        f"got {type(first_image)}."
+    )
+
+
+def test_plantdoc_dataset_smoke():
+    """Instantiate the Dataset from a small slice and check that
+    __len__ and __getitem__ behave as expected. Verifies the
+    .convert("RGB") call fires correctly on heterogeneous PD images."""
+    metadata, hf_dataset = irilab2026.load_plantdoc(variant="tiny")
+
+    sample = metadata.head(3)
+    ds = irilab2026.PlantDocDataset(sample, hf_dataset)
+
+    assert len(ds) == 3
+
+    image, label = ds[0]
+    assert isinstance(image, Image.Image)
+    # The defensive .convert("RGB") guarantees this even though some
+    # upstream PD images are CMYK.
+    assert image.mode == "RGB", (
+        f"Expected RGB mode after .convert('RGB'), got {image.mode}. "
+        f"This catches a regression where the defensive convert was removed."
+    )
+    assert isinstance(label, int)
+
+
+@pytest.mark.slow
+def test_load_plantdoc_default_variant_is_full():
+    """End-to-end (full variant): verify the default code path works at scale.
+
+    Marked `slow` so CI can skip it via `pytest -m "not slow"`.
+    All other PD tests use the tiny variant.
+    """
+    metadata, hf_dataset = irilab2026.load_plantdoc()  # variant default = "full"
+
+    # 2,578 images, 28 classes, 2,342 train / 236 test
+    assert 2_500 <= len(metadata) <= 2_700
+    assert len(hf_dataset) == len(metadata)
+    assert metadata["class_label"].nunique() == 28

@@ -329,6 +329,13 @@ _PV_HF_REPO_FULL = "geraldmc/plantvillage-full"
 _PV_HF_REPO_TINY = "geraldmc/plantvillage-tiny"
 _PV_HF_REVISION  = "v0.1.0"
 
+# --- PlantDoc HF Hub flow ---
+
+# Tag-pinned for reproducibility. Single-author namespace discipline
+# (geraldmc/) is what makes the tag effectively immutable in practice.
+_PD_HF_REPO_FULL = "geraldmc/plantdoc-full"
+_PD_HF_REPO_TINY = "geraldmc/plantdoc-tiny"
+_PD_HF_REVISION = "v0.1.0"
 
 def _sha256_of_file(path):
     h = hashlib.sha256()
@@ -558,6 +565,81 @@ def load_plantvillage(
     return metadata, images
 
 
+def load_plantdoc(variant: str = "full", force_download: bool = False):
+    """Load the PlantDoc dataset from Hugging Face Hub.
+
+    PlantDoc (Singh et al. 2020) is a field-condition plant disease
+    dataset built from web-scraped images across 13 host species. Unlike
+    PlantVillage's controlled lab images, PlantDoc images are
+    heterogeneous in resolution, lighting, and background — which is
+    why it's the canonical test bed for measuring whether a PV-trained
+    classifier transfers to real-world conditions.
+
+    Parameters
+    ----------
+    variant : {"full", "tiny"}, default "full"
+        Which HF Dataset to fetch. The "full" variant has 2,578 images
+        across 28 classes; "tiny" has ~164 images stratified across the
+        same classes, intended for fast test-suite use.
+    force_download : bool, default False
+        If True, bypass the local cache and re-fetch from HF Hub.
+
+    Returns
+    -------
+    metadata : pandas.DataFrame
+        One row per image, seven columns (no image column — images
+        live in the HF Dataset object):
+            class_label   str   — upstream folder name, verbatim
+            class_idx     int   — 0–27, case-sensitive alphabetical sort
+            host          str   — normalized host name (see dataset card)
+            disease       str   — lowercased disease name, "healthy" for healthy leaves
+            is_healthy    bool  — True if disease == "healthy"
+            split         str   — "train" or "test", from the upstream partition
+            filename      str   — original filename, verbatim
+    hf_dataset : datasets.Dataset
+        The HF Dataset object. Each row has the seven metadata columns
+        above plus an `image` column carrying a PIL Image.
+
+    Notes
+    -----
+    First call on a fresh Colab session downloads ~950 MB (full) or
+    ~50 MB (tiny) and caches to Drive if mounted (via the same
+    cache_dir resolver used by load_plantvillage). Subsequent calls
+    hit the cache. The tiny variant exists for test-suite and
+    smoke-test use, not analysis — see its dataset card on HF.
+
+    The upstream PlantDoc dataset has 28 classes, but one class
+    (Tomato two spotted spider mites leaf) has only 2 training images
+    and 0 test images. Singh et al. 2020 and downstream benchmark
+    papers report 27 classes; this loader preserves all 28 for
+    upstream fidelity. The orphan class shows up in both train and
+    metadata; filter on `df["split"] == "test"` for evaluation use.
+
+    Examples
+    --------
+    >>> df, ds = iri.load_plantdoc()
+    >>> train = df[df["split"] == "train"]
+    >>> dataset = iri.PlantDocDataset(train, ds, transform=my_transform)
+    """
+    if variant not in {"full", "tiny"}:
+        raise ValueError(
+            f"Unknown variant {variant!r}. Expected 'full' or 'tiny'."
+        )
+
+    repo_id = _PD_HF_REPO_FULL if variant == "full" else _PD_HF_REPO_TINY
+
+    hf_dataset = load_dataset(
+        repo_id,
+        revision=_PD_HF_REVISION,
+        split="train",
+        cache_dir=str(_resolve_cache_dir()),
+        download_mode="force_redownload" if force_download else "reuse_dataset_if_exists",
+    )
+
+    metadata = hf_dataset.remove_columns(["image"]).to_pandas()
+    return metadata, hf_dataset
+
+
 class PlantVillageDataset(Dataset):
     """PyTorch Dataset wrapper around the PlantVillage (metadata, images) pair.
 
@@ -618,6 +700,60 @@ class PlantVillageDataset(Dataset):
         if self.transform is not None:
             image = self.transform(image)
         return image, int(row["class_idx"])
+
+
+class PlantDocDataset(Dataset):
+    """PyTorch Dataset wrapping a PlantDoc metadata slice and HF Dataset.
+
+    Parameters
+    ----------
+    metadata_df : pandas.DataFrame
+        Metadata for the slice you want to iterate over. Typically a
+        filter of the full metadata DataFrame returned by
+        `load_plantdoc()` — for example, `df[df["split"] == "train"]`.
+        Pandas index values are preserved through filtering and used to
+        look up images in `hf_dataset`, so do NOT call `.reset_index()`
+        on the filtered DataFrame before passing it in.
+    hf_dataset : datasets.Dataset
+        The HF Dataset object also returned by `load_plantdoc()`.
+        Contains image bytes and metadata columns; this wrapper reads
+        only the image column.
+    transform : callable, optional
+        Applied to each PIL Image before it's returned. Standard
+        torchvision transforms work. If None, a PIL Image is returned
+        unchanged (after the .convert("RGB") defensive call).
+
+    Returns from __getitem__
+    -----------------------
+    (image, class_idx) : (PIL.Image | torch.Tensor, int)
+        `image` is the transformed image. `class_idx` is the integer
+        class label from the metadata.
+
+    Notes
+    -----
+    The .convert("RGB") call is essential here: PlantDoc images
+    include at least one CMYK image, and silent tensor-conversion
+    failure downstream would be hard to debug. PV images are uniformly
+    RGB, so the same call there is defensive hygiene; here it is
+    structural.
+    """
+
+    def __init__(self, metadata_df, hf_dataset, transform=None):
+        self.metadata = metadata_df
+        self.hf_dataset = hf_dataset
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.metadata)
+
+    def __getitem__(self, idx):
+        row = self.metadata.iloc[idx]
+        image = self.hf_dataset[int(row.name)]["image"]
+        image = image.convert("RGB")
+        if self.transform is not None:
+            image = self.transform(image)
+        return image, int(row["class_idx"])
+
 
 def tair_gaf_path() -> Path:
     """Return the filesystem path to the bundled TAIR GAF file.

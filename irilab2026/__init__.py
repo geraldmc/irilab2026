@@ -20,9 +20,11 @@ from .data import (
     load_atgenexpress,
     atgenexpress_metadata,
     probe_to_agi,
-    load_plantvillage_orientation,
     load_plantvillage,
     PlantVillageDataset,
+    load_plantdoc,           # <-- new
+    PlantDocDataset,         # <-- new
+    load_plantvillage_orientation,
     tair_gaf_path,
 )
 
@@ -37,8 +39,10 @@ __all__ = [
     "load_atgenexpress",
     "atgenexpress_metadata",
     "probe_to_agi",
-    "load_plantvillage_orientation",
-    "tair_gaf_path",  
     "load_plantvillage",
     "PlantVillageDataset",
+    "load_plantdoc",         # <-- new
+    "PlantDocDataset",       # <-- new
+    "load_plantvillage_orientation",
+    "tair_gaf_path",
 ]
