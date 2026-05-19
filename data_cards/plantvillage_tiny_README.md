@@ -61,7 +61,7 @@ Built by the same script (`scripts/build_pv_full_hf.py`) and from the
 same upstream commit as `plantvillage-full`. The additional step is
 stratified subsampling:
 
-- Random seed: `<SUBSAMPLE_SEED>` (fixed for reproducibility).
+- Random seed: `20260519` (fixed for reproducibility).
 - 50 images per class, sampled without replacement, per class
   independently.
 - The train/test `split` column is inherited from the full variant's

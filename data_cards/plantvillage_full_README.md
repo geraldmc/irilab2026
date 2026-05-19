@@ -69,7 +69,7 @@ wrapper. See the library's documentation.
 
 ## Build provenance
 
-Built from `spMohanty/PlantVillage-Dataset` at commit `<UPSTREAM_SHA>`
+Built from `spMohanty/PlantVillage-Dataset` at commit `7f7ecc7e1eaca78107e3affe7cb5abd9427e139a`
 by `scripts/build_pv_full_hf.py` in the `irilab2026` repository. The
 build steps:
 
