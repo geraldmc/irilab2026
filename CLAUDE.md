@@ -96,7 +96,6 @@ These are pending choices. Don't silently default to one path; raise the questio
 
 - **Notebook source format.** Notebooks are currently authored as `.ipynb` directly. Whether to move to a jupytext-paired `.py` / `.ipynb` setup so source is reviewable in Git is undecided. Don't introduce jupytext unprompted.
 - **`r1_orientation.ipynb` structural revision.** The v0.1.0 status note flagged that the orientation notebook would need one structural revision after R1-Q1's analytical notebooks landed and revealed what orientation actually needs to set up. R1-Q1 is now complete; the revision has not been done. Decide whether it is still needed and, if so, scope it.
-- **PlantDoc release platform.** Whether to ship `plantdoc` via GitHub release (consistent with orientation) or Hugging Face Hub (consistent with `plantvillage-full`). PD has the same many-small-file property that drove the PV-full migration to HF, so HF is the structural fit. But PD is smaller (~2,500 images vs PV's 54k), so the Drive-extract pain may be tolerable. Decide when PD curation starts.
 
 ## Cutting a data release
 
@@ -109,10 +108,31 @@ Existing products and their platforms:
 | Orientation sample | GitHub release | `data-orientation-vX.Y.Z` |
 | PlantVillage full image dataset | Hugging Face Hub | `vX.Y.Z` on `geraldmc/plantvillage-full` |
 | PlantVillage tiny image dataset (debug-grade subset) | Hugging Face Hub | `vX.Y.Z` on `geraldmc/plantvillage-tiny` |
-| PlantDoc image dataset (not yet built) | Undecided | — |
+| PlantDoc full image dataset | Hugging Face Hub | `vX.Y.Z` on `geraldmc/plantdoc-full` |
+| PlantDoc tiny image dataset (debug-grade subset) | Hugging Face Hub | `vX.Y.Z` on `geraldmc/plantdoc-tiny` |
 | PlantVillage pre-extracted features (deferred) | GitHub release | `data-pv-features-vX.Y.Z` |
 
-The PlantDoc release platform is undecided — see Open decisions.
+## Known footguns and how to handle them
+
+A growing list of environmental gotchas that have bitten this project before and will again. Each entry describes the symptom first (what you'll see when it happens), then the cause, then the recovery procedure.
+
+### The numpy ABI break after a fresh pip install in Colab
+
+**Symptom.** A cell that should just be importing or calling library code raises an `ImportError` deep in numpy's internals — typically something like `cannot import name '_center' from 'numpy._core.umath'`. Stack trace often goes through `datasets`, `pyarrow`, or `pandas` rather than touching project code directly. The error doesn't reproduce on a fresh runtime — only after a pip install ran during the current session.
+
+**Cause.** `pip install ... irilab2026` (or upgrading any package whose deps include numpy) pulled in a newer numpy version. Modules already imported into the running Python process — including pyarrow, numba, and `datasets`'s C extensions — were compiled against the older numpy ABI. Python now holds two incompatible numpy versions in memory at once. Colab usually prompts to restart but the prompt is not reliable; it sometimes silently skips. The first cell that imports anything depending on numpy after the install triggers the error.
+
+**Recovery.** Runtime menu → Restart session. The pip-installed package stays on disk; only in-memory state is lost. You'll need to re-run authentication cells (e.g. `login(token=...)`) and `import irilab2026 as iri; iri.setup()`. After restart, numpy is at a single consistent version and imports resolve cleanly. **Do not** try to re-pip-install or use `--force-reinstall` — that just churns deps more and doesn't fix the in-memory state.
+
+**Mitigation when writing new student-facing notebooks.** Three patterns reduce the frequency of this footgun:
+
+1. Default install line uses `--no-deps`: `!pip install -q --upgrade --no-deps git+https://github.com/geraldmc/irilab2026.git@main`. The `--no-deps` flag tells pip not to touch the dep tree at all, avoiding any numpy upgrade. The trade-off: students need to install the deps separately on a fresh runtime, and a new dep added to `pyproject.toml` requires a one-time deps install. The two-mode pattern documented in `pip-install-reference.md` walks through this in detail.
+
+2. Include a markdown cell in the install region acknowledging the restart prompt: "If Colab shows a yellow banner asking to restart the runtime after the install cell, click Restart Session and re-run from this cell forward. This is normal — pip upgraded numpy and Python needs a fresh process to use it cleanly." The PV Notebook 01 install region has this cell as of yesterday's loader-rewrite chat; copy the pattern.
+
+3. Be aware of the numpy floor pyWGCNA forces. R1-Q2 uses pyWGCNA 2.2.1, which requires `numpy >= 2.1.0`. This means the project-wide `pyproject.toml` cannot pin a numpy ceiling below 2.1 without breaking R1-Q2. Restricting numpy at the project level was considered and rejected during the R2-Q1 PD packaging chat. The footgun remains; the install-time mitigations above are how we live with it.
+
+**Why this entry exists.** This bit during R2-Q1 PD verification on 2026-05-19. Loss of an hour of debugging time on a non-substantive issue. Future occurrences should be a 30-second fix once this section exists.
 
 ### GitHub release flow (tarball)
 
