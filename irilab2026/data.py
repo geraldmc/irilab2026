@@ -1,11 +1,18 @@
 """
-Dataset loaders.
+Dataset loaders for the irilab2026 library.
 
-For v0.1.0, the only loader is ``load_atgenexpress``, which fetches the
-AtGenExpress abiotic stress microarray series from GEO (accessions
-GSE5620–GSE5628) and returns one DataFrame per stress.
+The module hosts loaders for two data domains:
 
-A note on what's included: GEO hosts the eight stress conditions plus the
+- **AtGenExpress (Arabidopsis microarray).** ``load_atgenexpress``,
+  ``atgenexpress_metadata``, ``probe_to_agi``. All fetch from GEO on
+  first call and cache locally.
+
+- **PlantVillage (plant disease images).**
+  ``load_plantvillage_orientation`` ships a small ~190-image structural
+  preview as a GitHub release tarball. ``load_plantvillage`` ships the
+  full ~54k-image dataset from Hugging Face Hub.
+
+A note on AtGenExpress scope: GEO hosts eight stress conditions plus the
 control. The ninth AtGenExpress condition, oxidative stress, lives at
 TAIR/NASCArrays only and is not reachable from the GEO download path. The
 loader is honest about this — it loads what GEO has, and downstream code
@@ -20,10 +27,10 @@ import urllib.request
 from importlib import resources
 from pathlib import Path
 
-from PIL import Image
 from torch.utils.data import Dataset
+from datasets import load_dataset
 
-import GEOparse           # <-- new
+import GEOparse
 import pandas as pd
 
 from typing import Iterable
@@ -314,13 +321,13 @@ _PV_ORIENTATION_SHA256 = (
     "7cc593e009d3ae45ffc3928eb0fea1929b1c6f5220a9c62bd02ac5ccc5b360c7"
 )
 
-_PV_FULL_URL = (
-    "https://github.com/geraldmc/irilab2026/releases/download/"
-    "data-pv-full-v0.1.0/plantvillage_full.tar.gz"
-)
-_PV_FULL_SHA256 = (
-    "656a9e32c3803721ff6fb99f619903b45455c5950174554e6b9dae263d3e1be4"
-)
+# Hugging Face Hub coordinates for the curated PlantVillage variants.
+# The revision is pinned to a tag rather than a commit SHA — namespace
+# discipline (single-author ``geraldmc/``) is what makes the tag effectively
+# immutable in practice. Reproducibility-critical pinning would be a SHA.
+_PV_HF_REPO_FULL = "geraldmc/plantvillage-full"
+_PV_HF_REPO_TINY = "geraldmc/plantvillage-tiny"
+_PV_HF_REVISION  = "v0.1.0"
 
 
 def _sha256_of_file(path):
@@ -423,90 +430,183 @@ def load_plantvillage_orientation():
     }
 
 
-def load_plantvillage():
-    """Load the full PlantVillage dataset (~54,000 images, ~1.5 GB).
+def load_plantvillage(
+    variant: str = "full",
+    force_download: bool = False,
+):
+    """Load a curated PlantVillage dataset from Hugging Face Hub.
 
-    Downloads the pinned tarball if not already cached, verifies its
-    SHA256, extracts it, and returns a DataFrame with one row per image.
-    For a small structural overview of the dataset, use
-    load_plantvillage_orientation() instead.
+    Returns a ``(metadata, images)`` tuple. The first element is a pandas
+    DataFrame with one row per image and seven metadata columns; the
+    second is a Hugging Face Dataset of the same length, holding the
+    image bytes inline. Pair them through :class:`PlantVillageDataset`
+    to feed a PyTorch ``DataLoader``.
+
+    For a small structural overview of PlantVillage (38 classes,
+    ~190 sample images), use :func:`load_plantvillage_orientation`
+    instead.
+
+    Parameters
+    ----------
+    variant : {"full", "tiny"}, default "full"
+        Which curated variant to load.
+
+        - ``"full"`` — ~54,000 images, the real training data (~1.5 GB
+          download on first call).
+        - ``"tiny"`` — ~1,900 images (50 per class), a debug-grade
+          subset for training-loop development. Iterates in minutes
+          instead of hours. **Not** for analysis; the per-class
+          subsample is too small to be a faithful representative.
+
+    force_download : bool, default False
+        If True, bypass the local HF cache and re-fetch from the Hub.
+        Useful if the cache is suspected to be corrupted.
 
     Returns
     -------
-    pandas.DataFrame
-        One row per image. Columns:
-        - image_path   (str)  : absolute path to the image file
-        - class_label  (str)  : e.g. "Apple___Apple_scab"
-        - class_idx    (int)  : 0-indexed, alphabetical over class_label
-        - host         (str)  : e.g. "Apple"
-        - disease      (str)  : e.g. "Apple_scab" or "healthy"
-        - split        (str)  : "train" or "test"
-        - leaf_id      (str)  : groups images from the same physical leaf
-        - leaf_grouped (bool) : True if leaf_id reflects upstream grouping,
-                                False if it's synthetic (one per image)
+    tuple of (pandas.DataFrame, datasets.Dataset)
+        First element: DataFrame with seven columns:
+
+        - ``class_label``  (str)  — e.g. ``"Apple___Apple_scab"``
+        - ``class_idx``    (int)  — 0-indexed, alphabetical over
+          ``class_label``
+        - ``host``         (str)  — e.g. ``"Apple"``
+        - ``disease``      (str)  — e.g. ``"Apple_scab"`` or ``"healthy"``
+        - ``split``        (str)  — ``"train"`` or ``"test"``
+        - ``leaf_id``      (str)  — groups images from the same physical
+          leaf
+        - ``leaf_grouped`` (bool) — True if ``leaf_id`` reflects upstream
+          grouping, False if it's synthetic (one per image)
+
+        Second element: HF Dataset of the same length, where
+        ``ds[i]["image"]`` returns a PIL Image for the i-th row of the
+        metadata DataFrame.
+
+    Notes
+    -----
+    **First call.** Downloads ~1.5 GB (full) or ~60 MB (tiny) of Parquet
+    shards from the Hub. Requires network access. Subsequent calls in the
+    same Python session read from memory; calls across sessions read from
+    the on-disk cache under :func:`cache_dir`.
+
+    **Filtering preserves the index.** This means filtered metadata
+    DataFrames still align with the underlying HF Dataset by row number,
+    which is what :class:`PlantVillageDataset` relies on. Don't
+    ``reset_index()`` after filtering:
+
+        >>> df, ds = iri.load_plantvillage()
+        >>> train_df = df[df.split == "train"]
+        >>> train_set = iri.PlantVillageDataset(train_df, ds, transform=tx)
+
+    **Train/test lives in metadata, not HF splits.** The HF dataset has
+    a single underlying "train" split; the train/test partition for
+    analysis is the ``split`` metadata column. This loader assumes the
+    HF layout has exactly one split named ``"train"``; an explicit error
+    is raised if that assumption breaks.
+
+    Examples
+    --------
+    >>> from irilab2026 import load_plantvillage, PlantVillageDataset
+    >>> df, ds = load_plantvillage(variant="tiny")
+    >>> df.shape
+    (1900, 7)
+    >>> sorted(df.columns.tolist())
+    ['class_idx', 'class_label', 'disease', 'host', 'leaf_grouped',
+     'leaf_id', 'split']
     """
-    cache = cache_dir()
-    extracted = cache / "plantvillage_full"
-    tarball = cache / "plantvillage_full.tar.gz"
-    metadata_path = extracted / "metadata.csv"
-
-    if not metadata_path.exists():
-        need_download = (
-            not tarball.exists()
-            or _sha256_of_file(tarball) != _PV_FULL_SHA256
-        )
-        if need_download:
-            _download_and_verify(_PV_FULL_URL, _PV_FULL_SHA256, tarball)
-        print(f"Extracting to {extracted} ...")
-        with tarfile.open(tarball, "r:gz") as tf:
-            tf.extractall(cache, filter="data")
-
-    if not metadata_path.exists():
-        raise RuntimeError(
-            f"Expected metadata file at {metadata_path} after extraction. "
-            f"The tarball may be malformed."
+    valid_variants = {"full", "tiny"}
+    if variant not in valid_variants:
+        raise ValueError(
+            f"Unknown variant: {variant!r}. "
+            f"Valid variants: {sorted(valid_variants)}."
         )
 
-    metadata = pd.read_csv(metadata_path)
-
-    # Resolve image_path from "relative to wrapper directory" to "absolute
-    # path on disk." metadata.csv stores paths like
-    # "color/Apple___Apple_scab/00075aa8...JPG"; the returned DataFrame
-    # has them rooted at the cache extraction location.
-    metadata["image_path"] = metadata["image_path"].apply(
-        lambda rel: str(extracted / rel)
+    repo_id = _PV_HF_REPO_FULL if variant == "full" else _PV_HF_REPO_TINY
+    download_mode = (
+        "force_redownload" if force_download else "reuse_dataset_if_exists"
     )
 
-    return metadata
+    # ``cache_dir`` is forwarded so that on Colab, HF's Parquet shards land
+    # on Drive (persistent across sessions) rather than the ephemeral
+    # ``/root/.cache/huggingface`` default. The HF library creates its own
+    # subdirectory structure under the path we pass.
+    ds = load_dataset(
+        repo_id,
+        revision=_PV_HF_REVISION,
+        cache_dir=str(cache_dir()),
+        download_mode=download_mode,
+    )
+
+    # The build pipeline pushed a single Dataset via ``push_to_hub``, which
+    # HF wraps as ``DatasetDict({"train": <ds>})`` on the hub. Our train/
+    # test logic uses the ``split`` metadata column, not HF's split
+    # mechanism. Confirm the assumption explicitly so a future change to
+    # the build script doesn't silently break the loader.
+    if list(ds.keys()) != ["train"]:
+        raise RuntimeError(
+            f"Expected {repo_id}@{_PV_HF_REVISION} to have a single 'train' "
+            f"split, but found splits: {list(ds.keys())}. The dataset's "
+            f"split structure may have changed; the loader assumes train/test "
+            f"live in the `split` metadata column."
+        )
+    images = ds["train"]
+
+    # The metadata DataFrame is everything except the image column.
+    metadata_columns = [c for c in images.column_names if c != "image"]
+    metadata = images.select_columns(metadata_columns).to_pandas()
+
+    return metadata, images
 
 
 class PlantVillageDataset(Dataset):
-    """PyTorch Dataset wrapper around a PlantVillage metadata DataFrame.
+    """PyTorch Dataset wrapper around the PlantVillage (metadata, images) pair.
 
-    Pass a DataFrame returned by load_plantvillage() or any subset of it
-    (for example, filtered by 'split' or 'host'). Each __getitem__ call
-    opens the image lazily, applies an optional transform, and returns a
-    (image, class_idx) tuple.
+    Pass the metadata DataFrame and HF Dataset returned by
+    :func:`load_plantvillage`. The metadata DataFrame can be filtered
+    first (for example, by ``split`` or ``host``) — its original index
+    is preserved through filtering, which is what ``__getitem__`` uses
+    to look up the image in the HF Dataset.
+
+    Each ``__getitem__`` call reads the image from the HF Dataset,
+    converts it to RGB, applies an optional transform, and returns an
+    ``(image, class_idx)`` tuple.
 
     Parameters
     ----------
     metadata : pandas.DataFrame
-        Must contain at least 'image_path' (absolute path) and 'class_idx'
-        (int) columns.
+        Returned (or filtered) from :func:`load_plantvillage`. Must
+        contain at least a ``class_idx`` (int) column. The DataFrame's
+        index is used as the positional lookup into ``hf_dataset``, so
+        do not call ``reset_index()`` after filtering.
+    hf_dataset : datasets.Dataset
+        The image-bearing Dataset returned by :func:`load_plantvillage`.
+        Must contain an ``"image"`` column whose elements are PIL Images.
     transform : callable, optional
         torchvision-style transform applied to the loaded PIL Image.
-        Default None returns the raw PIL Image. For a ResNet50 baseline,
-        pass the standard ImageNet preprocessing pipeline.
+        Default ``None`` returns the (RGB-converted) PIL Image as-is.
+        For a ResNet50 baseline, pass the standard ImageNet
+        preprocessing pipeline.
 
     Notes
     -----
-    Indexing uses .iloc (positional), so DataFrames with non-contiguous
-    indices — for example, the result of df[df["split"] == "train"] —
-    work without needing reset_index().
+    Indexing uses ``.iloc`` (positional) on ``metadata`` to retrieve the
+    row, then ``row.name`` (the DataFrame index value) to look up the
+    image in ``hf_dataset``. This is why filtered DataFrames with
+    non-contiguous indices — for example, the result of
+    ``df[df["split"] == "train"]`` — work without
+    ``reset_index()``.
+
+    Examples
+    --------
+    >>> df, ds = iri.load_plantvillage(variant="tiny")
+    >>> train_df = df[df.split == "train"]
+    >>> train_set = PlantVillageDataset(train_df, ds)
+    >>> image, label = train_set[0]
     """
 
-    def __init__(self, metadata, transform=None):
+    def __init__(self, metadata, hf_dataset, transform=None):
         self.metadata = metadata
+        self.hf_dataset = hf_dataset
         self.transform = transform
 
     def __len__(self):
@@ -514,7 +614,7 @@ class PlantVillageDataset(Dataset):
 
     def __getitem__(self, idx):
         row = self.metadata.iloc[idx]
-        image = Image.open(row["image_path"]).convert("RGB")
+        image = self.hf_dataset[int(row.name)]["image"].convert("RGB")
         if self.transform is not None:
             image = self.transform(image)
         return image, int(row["class_idx"])
