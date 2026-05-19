@@ -137,5 +137,5 @@ PlantVillage paper:
 }
 ```
 
-Curated and packaged by Gerald McCullagh for the iResearch Institute
+Curated and packaged by Gerald McCollam for the iResearch Institute
 2026 Virtual Lab.
