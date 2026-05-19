@@ -632,7 +632,7 @@ def load_plantdoc(variant: str = "full", force_download: bool = False):
         repo_id,
         revision=_PD_HF_REVISION,
         split="train",
-        cache_dir=str(_resolve_cache_dir()),
+        cache_dir=str(cache_dir()),
         download_mode="force_redownload" if force_download else "reuse_dataset_if_exists",
     )
 
