@@ -24,7 +24,7 @@ classifiers = [
     "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 dependencies = [
-    "numpy >= 1.22, < 2.1",
+    "numpy >= 1.22",  # ceiling removed
     "pandas>=2.0",
     "GEOparse>=2.0",
     "seaborn>=0.12",
