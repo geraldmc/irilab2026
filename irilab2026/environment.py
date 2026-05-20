@@ -72,6 +72,40 @@ def setup(gpu_required: bool = False, mount_drive: bool = True) -> None:
     )
 
 
+def seed_all(seed: int = 42) -> None:
+    """Seed Python, NumPy, and PyTorch (CPU + CUDA) for reproducibility.
+
+    Also flips cuDNN into deterministic mode and disables the
+    benchmark autotuner. Together these make training runs
+    reproducible across re-executions of the same notebook on the
+    same hardware.
+
+    Idempotent: calling it twice with the same seed is the same as
+    calling it once.
+
+    Parameters
+    ----------
+    seed : int, default 42
+        The seed value to use for every RNG.
+
+    Notes
+    -----
+    PYTHONHASHSEED is deliberately not set here. By the time this
+    function runs, Python's startup hashing has already happened —
+    setting the env var at this point would have no effect. To make
+    PYTHONHASHSEED reproducible you'd need to set it before the
+    Python process starts, which is not in this function's scope.
+    """
+    import random
+    import numpy as np
+    import torch
+
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed_all(seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
 # ---------------------------------------------------------------------------
 # Helpers — exposed for the orientation notebook
 # ---------------------------------------------------------------------------

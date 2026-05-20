@@ -16,6 +16,12 @@ from .environment import (
     output_dir,
 )
 
+from .vision import (
+    build_baseline_model,
+    imagenet_train_transform,
+    imagenet_eval_transform,
+)
+
 from .data import (
     load_atgenexpress,
     atgenexpress_metadata,
@@ -45,4 +51,8 @@ __all__ = [
     "PlantDocDataset",       # <-- new
     "load_plantvillage_orientation",
     "tair_gaf_path",
+    "seed_all",
+    "build_baseline_model",
+    "imagenet_train_transform",
+    "imagenet_eval_transform",
 ]
