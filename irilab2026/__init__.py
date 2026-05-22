@@ -30,11 +30,13 @@ from .data import (
     probe_to_agi,
     load_plantvillage,
     PlantVillageDataset,
-    load_plantdoc,           # <-- new
-    PlantDocDataset,         # <-- new
+    load_plantdoc,
+    PlantDocDataset,
     load_plantvillage_orientation,
     tair_gaf_path,
 )
+
+from .training import train_baseline           # <-- new
 
 __version__ = "0.2.0"
 
@@ -44,18 +46,18 @@ __all__ = [
     "mount_google_drive",
     "has_gpu",
     "output_dir",
-    "seed_all",  
+    "seed_all",
     "load_atgenexpress",
     "atgenexpress_metadata",
     "probe_to_agi",
     "load_plantvillage",
     "PlantVillageDataset",
-    "load_plantdoc",         # <-- new
-    "PlantDocDataset",       # <-- new
+    "load_plantdoc",
+    "PlantDocDataset",
     "load_plantvillage_orientation",
     "tair_gaf_path",
-    "seed_all",
     "build_baseline_model",
     "imagenet_train_transform",
     "imagenet_eval_transform",
+    "train_baseline",                          # <-- new
 ]
