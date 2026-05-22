@@ -12,7 +12,7 @@ import torch.nn as nn
 from torch.utils.data import DataLoader
 from sklearn.model_selection import train_test_split
 
-from .utils import seed_all
+from .environment import seed_all
 from .vision import (
     build_baseline_model,
     imagenet_train_transform,
