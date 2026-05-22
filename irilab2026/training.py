@@ -206,7 +206,7 @@ def train_baseline(
     # tqdm is optional — only imported if verbose to avoid the dep when
     # callers want silent runs.
     if verbose:
-        from tqdm.auto import tqdm
+        from tqdm import tqdm
 
     for epoch in range(epochs):
         # Manual LR step — matches R2-Q1's "step from 0.01 to 0.001 at
