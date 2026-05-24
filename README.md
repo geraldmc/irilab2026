@@ -26,6 +26,7 @@ irilab2026/
 │       ├── r2-q2/                    # Grad-CAM failure modes
 │       ├── r2-q3/                    # Targeted vs kitchen-sink augmentation
 │       └── r2-q4/                    # Cross-host transfer within PV
+│  
 ├── tests/                            # smoke tests for the library
 ├── scripts/                          # ad-hoc scripts (data release tooling)
 ├── pyproject.toml
