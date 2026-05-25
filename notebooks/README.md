@@ -6,12 +6,14 @@ This directory holds every Jupyter notebook in the Virtual Lab program. The stru
 
 ```
 notebooks/
+│
 ├── r1/                       # Rationale 1: gene expression / ML on omics data
 │   ├── r1_orientation.ipynb  # AtGenExpress on-ramp
 │   ├── r1-q1/                # Common stress core
 │   ├── r1-q2/                # Hub genes from co-expression
 │   ├── r1-q3/                # SHAP feature-attribution batch-confound test
 │   └── r1-q4/                # Cross-dataset stress classifier
+│   
 └── r2/                       # Rationale 2: computer vision / plant disease
     ├── r2_orientation.ipynb  # PlantVillage / PlantDoc on-ramp
     ├── r2-q1/                # PV → PD transferability

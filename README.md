@@ -11,16 +11,17 @@ irilab2026/
 │   ├── data.py                       # dataset loaders (gene expression and plant images)
 │   ├── vision.py                     # image-classifier helpers
 │   └── training.py                   # training loop helpers
+│
 ├── notebooks/                        # Jupyter notebooks for every question
 │   │
-│   ├── r1/                           # Rationale 1: gene expression
+│   ├── r1/                           # Rationale 1: Gene Expression
 │   │   ├── r1_orientation.ipynb
 │   │   ├── r1-q1/                    # Common stress core
 │   │   ├── r1-q2/                    # Hub genes from co-expression
 │   │   ├── r1-q3/                    # Feature attribution under batch effects
 │   │   └── r1-q4/                    # Cross-dataset stress classifier
 │   │   
-│   └── r2/                           # Rationale 2: plant disease imaging
+│   └── r2/                           # Rationale 2: Plant Disease Imaging
 │       ├── r2_orientation.ipynb
 │       ├── r2-q1/                    # PV → PD transferability
 │       ├── r2-q2/                    # Grad-CAM failure modes
