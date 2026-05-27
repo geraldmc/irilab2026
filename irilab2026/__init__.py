@@ -38,7 +38,7 @@ from .data import (
 
 from .training import train_baseline           # <-- new
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 __all__ = [
     "setup",

@@ -161,6 +161,9 @@ def atgenexpress_metadata(
         - ``time_h`` (float): time point in hours.
         - ``replicate`` (int): replicate number.
         - ``gse`` (str): the GEO accession the sample came from.
+        - ``last_update_date`` (str): the GSM's ``last_update_date`` field
+          from the SOFT file, formatted as ``YYYY-MM-DD``. Used downstream
+          as a per-sample processing-date proxy for batch-confound tests.
 
     Raises
     ------
@@ -184,9 +187,9 @@ def atgenexpress_metadata(
     >>> from irilab2026 import atgenexpress_metadata
     >>> meta = atgenexpress_metadata(stresses=['cold'])
     >>> meta.shape
-    (24, 5)
+    (24, 6)
     >>> sorted(meta.columns.tolist())
-    ['gse', 'replicate', 'stress', 'time_h', 'tissue']
+    ['gse', 'last_update_date', 'replicate', 'stress', 'time_h', 'tissue']
     """
     if stresses is None:
         stresses = ALL_STRESSES
@@ -197,11 +200,15 @@ def atgenexpress_metadata(
     cache_file = cache_dir() / "atgenexpress_metadata.parquet"
 
     # Cache hit only counts if every requested stress is already in the
-    # cached frame. A prior call with a smaller subset is not a hit for a
-    # larger request.
+    # cached frame AND the cached frame has the current schema. A prior
+    # call with a smaller subset is not a hit for a larger request; an
+    # older cache built before last_update_date was added (pre-v0.3.0)
+    # is also not a hit and will be rebuilt.
     if cache_file.exists() and not force_download:
         cached = pd.read_parquet(cache_file)
-        if set(requested).issubset(set(cached["stress"].unique())):
+        has_stresses = set(requested).issubset(set(cached["stress"].unique()))
+        has_schema = "last_update_date" in cached.columns
+        if has_stresses and has_schema:
             return cached[cached["stress"].isin(requested)].copy()
 
     metadata = _build_atgenexpress_metadata(requested, force_download=force_download)
@@ -974,6 +981,7 @@ def _build_atgenexpress_metadata(
                 "time_h": _extract_time(title),
                 "replicate": _extract_rep(title),
                 "gse": gse_id,
+                "last_update_date": gsm.metadata.get("last_update_date", [None])[0],
             })
 
     return pd.DataFrame(rows).set_index("GSM")
