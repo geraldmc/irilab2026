@@ -26,6 +26,7 @@ def train_baseline(
     dataset_class,
     *,
     num_classes,
+    train_transform=None,      # <-- new
     shuffle_labels=False,
     seed=42,
     epoch_cap=None,
@@ -64,6 +65,12 @@ def train_baseline(
     num_classes : int
         Number of output classes. Required; passed to
         `iri.build_baseline_model`.
+    train_transform : callable, optional
+        Transform applied to the training images — any torchvision transform
+        or callable mapping a PIL image to a (3, 224, 224) normalized tensor.
+        If None (default), uses `imagenet_train_transform()`, which reproduces
+        the behavior from before this parameter existed. Validation always
+        uses `imagenet_eval_transform()`, regardless of this argument.
     shuffle_labels : bool, default False
         If True, shuffle `class_idx` values across the train split with a
         fixed seed *before* the val carve, so both train and val carry
@@ -174,9 +181,19 @@ def train_baseline(
     train_set_meta = train_metadata.loc[train_idx]
     val_set_meta = train_metadata.loc[val_idx]
 
+  # Train transform: caller-supplied augmentation, or the default light
+    # ImageNet train pipeline when none is given. The None branch keeps every
+    # pre-existing caller (R2-Q2 N03's data-randomization check included)
+    # behaving exactly as before — this change is purely additive.
+    if train_transform is None:
+        train_transform = imagenet_train_transform()
+
     train_dataset = dataset_class(
-        train_set_meta, hf_dataset, transform=imagenet_train_transform()
+        train_set_meta, hf_dataset, transform=train_transform
     )
+    # Val always uses the deterministic eval transform. Augmentation is a
+    # property of training only; the validation signal must stay stable so
+    # best-val checkpointing compares like with like across epochs.
     val_dataset = dataset_class(
         val_set_meta, hf_dataset, transform=imagenet_eval_transform()
     )

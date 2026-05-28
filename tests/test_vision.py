@@ -161,3 +161,74 @@ def test_train_and_eval_transforms_use_same_normalization():
 
     assert train_norm.mean == eval_norm.mean, "Normalize mean differs between train and eval"
     assert train_norm.std == eval_norm.std, "Normalize std differs between train and eval"
+
+
+# ---------------------------------------------------------------------------
+# randaugment_train_transform
+# ---------------------------------------------------------------------------
+
+
+def test_randaugment_train_transform_returns_compose():
+    t = irilab2026.randaugment_train_transform(num_ops=2, magnitude=9)
+    assert isinstance(t, T.Compose)
+
+
+def test_randaugment_train_transform_expected_sequence():
+    """RandAugment must sit between the crop and ToTensor."""
+    t = irilab2026.randaugment_train_transform(num_ops=2, magnitude=9)
+    names = [type(x).__name__ for x in t.transforms]
+    assert names == [
+        "RandomResizedCrop",
+        "RandAugment",
+        "RandomHorizontalFlip",
+        "ToTensor",
+        "Normalize",
+    ]
+
+
+def test_randaugment_train_transform_randaugment_before_totensor():
+    """The load-bearing ordering: RandAugment operates on PIL images, so it
+    must precede ToTensor or it fails at runtime."""
+    t = irilab2026.randaugment_train_transform()
+    names = [type(x).__name__ for x in t.transforms]
+    assert names.index("RandAugment") < names.index("ToTensor")
+
+
+def test_randaugment_train_transform_produces_correct_tensor_shape():
+    t = irilab2026.randaugment_train_transform(num_ops=2, magnitude=9)
+    img = Image.new("RGB", (300, 400), color="red")
+    result = t(img)
+    assert isinstance(result, torch.Tensor)
+    assert result.shape == (3, 224, 224)
+
+
+def test_randaugment_train_transform_returns_fresh_compose():
+    a = irilab2026.randaugment_train_transform()
+    b = irilab2026.randaugment_train_transform()
+    assert a is not b
+
+
+def test_randaugment_train_transform_params_keyword_only():
+    """num_ops and magnitude are keyword-only — guards against the
+    (magnitude, num_ops) ordering mistake."""
+    with pytest.raises(TypeError):
+        irilab2026.randaugment_train_transform(2, 9)  # positional
+
+
+def test_randaugment_train_transform_uses_imagenet_normalization():
+    """Normalization must match the eval transform so augmented images stay in
+    the model's expected distribution."""
+    rand_t = irilab2026.randaugment_train_transform()
+    eval_t = irilab2026.imagenet_eval_transform()
+    assert rand_t.transforms[-1].mean == eval_t.transforms[-1].mean
+    assert rand_t.transforms[-1].std == eval_t.transforms[-1].std
+
+
+def test_randaugment_train_transform_rejects_bad_magnitude():
+    with pytest.raises(ValueError, match="magnitude"):
+        irilab2026.randaugment_train_transform(magnitude=99)
+
+
+def test_randaugment_train_transform_rejects_bad_num_ops():
+    with pytest.raises(ValueError, match="num_ops"):
+        irilab2026.randaugment_train_transform(num_ops=0)

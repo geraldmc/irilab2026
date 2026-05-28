@@ -22,6 +22,7 @@ from .vision import (
     build_baseline_model,
     imagenet_train_transform,
     imagenet_eval_transform,
+    randaugment_train_transform,
 )
 
 from .data import (
@@ -36,7 +37,7 @@ from .data import (
     tair_gaf_path,
 )
 
-from .training import train_baseline           # <-- new
+from .training import train_baseline
 
 __version__ = "0.3.0"
 
@@ -59,5 +60,6 @@ __all__ = [
     "build_baseline_model",
     "imagenet_train_transform",
     "imagenet_eval_transform",
-    "train_baseline",                          # <-- new
+    "randaugment_train_transform",      # <-- new
+    "train_baseline",
 ]

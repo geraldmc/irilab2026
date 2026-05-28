@@ -27,7 +27,8 @@ def test_train_baseline_signature_keyword_only():
         name for name, p in params.items()
         if p.kind == inspect.Parameter.KEYWORD_ONLY
     ]
-    for name in ("num_classes", "shuffle_labels", "seed", "epoch_cap", "verbose"):
+    for name in ("num_classes", "train_transform", "shuffle_labels",
+                    "seed", "epoch_cap", "verbose"):
         assert name in keyword_only, (
             f"{name} should be keyword-only. Check the * separator in "
             f"train_baseline's signature."
@@ -108,3 +109,32 @@ def test_train_baseline_shuffle_changes_state_dict():
         "Shuffled and unshuffled training produced identical state_dicts. "
         "The shuffle_labels flag may not be doing anything."
     )
+
+
+def test_train_baseline_accepts_train_transform_keyword():
+    """train_transform is a keyword-only parameter defaulting to None."""
+    import inspect
+    sig = inspect.signature(irilab2026.train_baseline)
+    assert "train_transform" in sig.parameters
+    p = sig.parameters["train_transform"]
+    assert p.kind == inspect.Parameter.KEYWORD_ONLY
+    assert p.default is None
+
+
+@pytest.mark.slow
+def test_train_baseline_runs_with_custom_train_transform():
+    """Passing a custom train transform (here the deterministic eval
+    transform — the no-augmentation condition) runs end to end and returns the
+    expected shapes."""
+    metadata, hf_dataset = irilab2026.load_plantvillage(variant="tiny")
+    state_dict, history = irilab2026.train_baseline(
+        metadata, hf_dataset,
+        dataset_class=irilab2026.PlantVillageDataset,
+        num_classes=38,
+        train_transform=irilab2026.imagenet_eval_transform(),  # no-aug floor
+        epoch_cap=1,
+        verbose=False,
+    )
+    assert isinstance(state_dict, dict)
+    assert state_dict["fc.weight"].shape == (38, 512)
+    assert len(history["train_loss"]) == 1
