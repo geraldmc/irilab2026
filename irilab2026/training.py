@@ -26,7 +26,8 @@ def train_baseline(
     dataset_class,
     *,
     num_classes,
-    train_transform=None,      # <-- new
+    train_transform=None,
+    val_dataset_class=None,    # <-- new
     shuffle_labels=False,
     seed=42,
     epoch_cap=None,
@@ -71,6 +72,13 @@ def train_baseline(
         If None (default), uses `imagenet_train_transform()`, which reproduces
         the behavior from before this parameter existed. Validation always
         uses `imagenet_eval_transform()`, regardless of this argument.
+    val_dataset_class : type, optional
+        Dataset class used to build the validation set. Defaults to
+        `dataset_class` (the training class), which is correct whenever the
+        train/val difference is only the transform. Set it when the *training*
+        dataset alters images inside `__getitem__` — for example a dataset that
+        randomizes the background — so the validation set can use a plain
+        dataset and the best-val signal stays stable across epochs.
     shuffle_labels : bool, default False
         If True, shuffle `class_idx` values across the train split with a
         fixed seed *before* the val carve, so both train and val carry
@@ -194,7 +202,14 @@ def train_baseline(
     # Val always uses the deterministic eval transform. Augmentation is a
     # property of training only; the validation signal must stay stable so
     # best-val checkpointing compares like with like across epochs.
-    val_dataset = dataset_class(
+    #
+    # `val_dataset_class` defaults to `dataset_class`, which keeps every
+    # pre-existing caller unchanged. It exists for the case where the training
+    # dataset transforms the image *before* the transform runs — e.g. a dataset
+    # that randomizes the background inside __getitem__ — so forcing the eval
+    # transform is not enough to keep val clean; val needs the plain dataset.
+    val_dc = val_dataset_class if val_dataset_class is not None else dataset_class
+    val_dataset = val_dc(
         val_set_meta, hf_dataset, transform=imagenet_eval_transform()
     )
 

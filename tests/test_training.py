@@ -35,6 +35,17 @@ def test_train_baseline_signature_keyword_only():
         )
 
 
+def test_train_baseline_accepts_val_dataset_class_keyword():
+    """val_dataset_class is a keyword-only parameter defaulting to None, so
+    val falls back to the training dataset class unless overridden."""
+    import inspect
+    sig = inspect.signature(irilab2026.train_baseline)
+    assert "val_dataset_class" in sig.parameters
+    p = sig.parameters["val_dataset_class"]
+    assert p.kind == inspect.Parameter.KEYWORD_ONLY
+    assert p.default is None
+
+
 @pytest.mark.slow
 def test_train_baseline_smoke_tiny_variant():
     """End-to-end smoke test on the tiny PV variant — verifies the helper
