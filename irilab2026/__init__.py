@@ -39,6 +39,11 @@ from .data import (
 
 from .training import train_baseline
 
+from .evaluation import (
+    build_idx_to_cat,
+    evaluate_in_categories,
+)
+
 __version__ = "0.3.0"
 
 __all__ = [
@@ -60,6 +65,8 @@ __all__ = [
     "build_baseline_model",
     "imagenet_train_transform",
     "imagenet_eval_transform",
-    "randaugment_train_transform",      # <-- new
+    "randaugment_train_transform",
     "train_baseline",
+    "build_idx_to_cat",                 # <-- new
+    "evaluate_in_categories",           # <-- new
 ]
