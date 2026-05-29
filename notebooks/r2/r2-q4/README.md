@@ -33,4 +33,4 @@ No external comparison anchor for R2-Q4. The interpretive frame is the page's 2Ã
 
 ## Status
 
-Notebook scaffolding drafted; body section content still to fill. Four notebooks numbered 00â€“03, opener-plus-preamble base in place, body section headers numbered. NB01 accuracy-gate framing (hard "stop here if not" vs soft "note what this means for your interpretation") is an open question carried forward to body-content drafting.
+All four notebooks have full body content; the question chain was recently finalized. R2-Q4 has not yet gone through the program's paper / presentation cycle.
