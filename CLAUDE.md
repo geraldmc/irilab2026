@@ -35,7 +35,7 @@ If asked to produce any of the above, ask before adding it to the repo. The defa
 ## Glossary
 
 - **Rationale 1 (R1)** — the RNA-seq / gene-expression track of the Virtual Lab program. Four research questions, R1-Q1 through R1-Q4.
-- **Rationale 2 (R2)** — the computer-vision / plant-disease track. Four questions, R2-Q1 through R2-Q4. **No R2 notebooks exist in this repo yet** — focus is R1 first.
+- **Rationale 2 (R2)** — the computer-vision / plant-disease track. Four questions, R2-Q1 through R2-Q4. R2-Q1 and R2-Q2 are reference chains (analytically closed); R2-Q3 and R2-Q4 are drafted as of 2026-05-29.
 - **AtGenExpress** — Kilian et al. 2007 abiotic-stress microarray series on the ATH1 platform. GSE5620–GSE5628 on GEO. Eight stresses reachable via GEO; the ninth (oxidative) is TAIR/NASCArrays-only and deliberately excluded from `load_atgenexpress()`.
 - **Wang 2023** — RNA-seq cold-stress dataset (PRJNA767196 / SRP339213). Test side for R1-Q4 cross-platform classifier; not in the loader yet.
 - **EQ#1, EQ#2** — Essential Question reports. Mentee deliverables in weeks 1 and 2 of the program. Notebook prose may reference them; they are not produced by code.
@@ -71,6 +71,11 @@ Mentees are high school and early college students. Assume no prior Python beyon
 - **The GSE→stress mapping in `data.py` was verified against GEO accession titles.** Don't change it without re-verifying against GEO directly — a wrong mapping silently produces analyses on the wrong stress.
 - **Cache directory** is `My Drive/irilab2026_cache/` in Colab (Drive mounted), `/content/irilab2026_cache/` in Colab without Drive (fallback only), `~/.irilab2026_cache/` locally. The `_soft/` subdirectory inside it is GEOparse's SOFT-file cache.
 - **`probe_to_agi()` returns a dict, not a Series.** Deliberate, for parity with the R1-Q1 inline pattern and to simplify testing. Don't switch return types without checking call sites; `df.index.map(probe_to_agi)` and `df['probe_col'].map(probe_to_agi)` both work with the dict form.
+- **`vision.py`'s train and eval transforms share normalization constants by construction.** `_IMAGENET_MEAN` and `_IMAGENET_STD` are module-level so train, eval, and `randaugment_train_transform` cannot drift out of sync. Don't duplicate them inside individual transform functions.
+- **`train_baseline()`'s recipe is locked to R2-Q1 N03's choices** — SGD 0.9, lr 0.01 → 0.001 step at epoch 7, batch 32, 10 epochs, 10% stratified val carve, best-val checkpointing. Changing any of these silently invalidates cross-condition comparability with R2-Q1's published baseline. Don't tune.
+- **`train_baseline()` has two recent additive parameters.** `train_transform=None` (defaults to `imagenet_train_transform()`); `val_dataset_class=None` (defaults to `dataset_class`). Both are backward-compatible — `None` reproduces the pre-parameter behavior. The val transform is always `imagenet_eval_transform()` regardless of `train_transform`; validation augmentation is wrong by design, so there is no override knob for that.
+- **`evaluate_in_categories()` uses an asymmetric mapping deliberately.** Predictions are always mapped with the *training dataset's* (PV's) class-to-category lookup, because the model emits indices in its training class space. Ground-truth labels are mapped with the *eval dataset's* lookup. This asymmetry is what makes the PV→PD comparison correct; do not "fix" it.
+- **`train_baseline()` and `evaluate_in_categories()` both require a GPU.** They call `.cuda()` directly. Notebooks that train or evaluate should call `iri.setup(gpu_required=True)` so the absence of a GPU fails at setup rather than mid-recipe.
 
 ## Commands
 
@@ -96,6 +101,10 @@ These are pending choices. Don't silently default to one path; raise the questio
 
 - **Notebook source format.** Notebooks are currently authored as `.ipynb` directly. Whether to move to a jupytext-paired `.py` / `.ipynb` setup so source is reviewable in Git is undecided. Don't introduce jupytext unprompted.
 - **`r1_orientation.ipynb` structural revision.** The v0.1.0 status note flagged that the orientation notebook would need one structural revision after R1-Q1's analytical notebooks landed and revealed what orientation actually needs to set up. R1-Q1 is now complete; the revision has not been done. Decide whether it is still needed and, if so, scope it.
+- **Install line normalization.** Six distinct install patterns coexist across the 35 notebooks: `--force-reinstall --no-deps git+...@main` (R1-Q1 and parts of R1-Q2), plain `git+...@main` (most of R1-Q2 onward and all of R2-Q3/Q4), the commented two-line printed pattern (all of R2-Q1 and R2-Q2), and orientation-only one-offs. The repository-conventions section names `pip install -q git+...@main` as the canonical line; if that's still the intent, the 35 notebooks need rewriting for uniformity. If the two-mode pattern in R2-Q1/Q2 is the better answer because of the numpy footgun, propagate that pattern instead.
+- **Precommit notebook naming.** The "Week 1 orient + write precommit.json" role uses three different filenames: `00_question_orientation` (R1-Q2), `00_orient_and_precommit` (R1-Q3, R1-Q4, R2-Q3, R2-Q4), and `01_orientation_and_precommit` (R2-Q2); R2-Q1 embeds it inside `02_pd_orientation`. Pick one.
+- **Notebook numbering origin.** Some folders start at `01` (R1-Q1, R2-Q1, R2-Q2); others start at `00` (R1-Q2 onward in R1, R2-Q3 and R2-Q4 in R2). Either is fine; both is churn.
+- **Classifier weight file extension.** R2-Q1 saves `baseline_resnet18.pt`; R2-Q3 N01 saves `*.pkl`; R2-Q4 N01 prose says `.pt` while the code path saves `.pkl`. PyTorch state_dicts are conventionally `.pt`. Pick one.
 
 ## Cutting a data release
 
@@ -132,7 +141,7 @@ A growing list of environmental gotchas that have bitten this project before and
 
 3. Be aware of the numpy floor pyWGCNA forces. R1-Q2 uses pyWGCNA 2.2.1, which requires `numpy >= 2.1.0`. This means the project-wide `pyproject.toml` cannot pin a numpy ceiling below 2.1 without breaking R1-Q2. Restricting numpy at the project level was considered and rejected during the R2-Q1 PD packaging chat. The footgun remains; the install-time mitigations above are how we live with it.
 
-**Why this entry exists.** This bit during R2-Q1 PD verification on 2026-05-19. Loss of an hour of debugging time on a non-substantive issue. Future occurrences should be a 30-second fix once this section exists.
+**Why this entry exists.** First surfaced during R2-Q1 PD verification, and likely to recur on every fresh Colab session that pulls in a numpy upgrade through the package dep tree. The recovery is mechanical once you know what's happening; this entry exists so the recovery is the first thing you reach for rather than the third.
 
 ### GitHub release flow (tarball)
 
@@ -165,39 +174,32 @@ The HF flow does not produce a SHA256 or a downloadable tarball asset. Reproduci
 
 No library release has been cut yet — versioning is deferred until a milestone (see **Distribution** below). When the first release is cut, this section should document the procedure. At minimum it needs to cover: choosing the version number, keeping `__version__` in `irilab2026/__init__.py` and `version` in `pyproject.toml` in sync, tagging the release, and updating the install line in notebooks from `@main` to the pinned tag. Until then, treat this as TBD and raise it when the milestone is reached.
 
-## Project status (as of v0.2.0)
+## Project status (as of v0.3.0)
 
-The library has grown from setup-and-load-only to actively supporting R1-Q2 notebook
-drafting. Public API: `setup()`, `output_dir()`, `load_atgenexpress()`,
-`atgenexpress_metadata()` (added during R1-Q2 N0 drafting; AtGenExpress sample-level
-metadata parsed from cached SOFT files), and the unwrapped helpers
-`is_colab()`, `mount_google_drive()`, `has_gpu()`. Tests in `tests/` remain
-network-free and pass.
+The library has grown beyond setup-and-load-only into a full support layer for both rationales. Public API now numbers 18 exported symbols across five modules:
 
-**R1 notebooks.**
+- **`environment.py`** — `setup`, `is_colab`, `mount_google_drive`, `has_gpu`, `cache_dir`, `output_dir`, `seed_all`.
+- **`data.py`** — `load_atgenexpress`, `atgenexpress_metadata`, `probe_to_agi`, `load_plantvillage`, `PlantVillageDataset`, `load_plantdoc`, `PlantDocDataset`, `load_plantvillage_orientation`, `tair_gaf_path`.
+- **`vision.py`** — `build_baseline_model`, `imagenet_train_transform`, `imagenet_eval_transform`, `randaugment_train_transform`.
+- **`training.py`** — `train_baseline`.
+- **`evaluation.py`** — `build_idx_to_cat`, `evaluate_in_categories`.
 
-- `r1_orientation.ipynb` — drafted, but the post-R1-Q1 structural revision flagged
-  in the v0.1.0 status note has not been done (see Open decisions).
-- `r1-q1/` — all four notebooks complete and analytically closed:
-  `00_question_orientation.ipynb`, `01_deg_analysis.ipynb`, `02_core_overlap.ipynb`,
-  `03_consensus_compare.ipynb`. Remaining R1-Q1 deliverables (final paper,
-  presentation) live outside the notebook chain.
-- `r1-q2/` — in progress. `00_question_orientation.ipynb` complete (produces
-  filtered per-tissue matrices and `precommit.json`). `01_wgcna.ipynb` actively
-  drafting. `02_hub_identification.ipynb` and `03_comparison.ipynb` scoped but
-  not drafted.
-- `r1-q3/`, `r1-q4/` — not drafted. The Workflow / Considerations / References
-  pass applied to R1-Q1 and R1-Q2 question pages has not yet been applied to
-  these.
+Tests in `tests/` remain network-free and pass — 86 tests across 7 files covering all five modules, including the recent `train_transform=` and `val_dataset_class=` parameters on `train_baseline`.
 
-**R2 notebooks.** None exist. Question pages live on Notion. R2 drafting is
-deferred until R1 lands.
+**R1 notebooks.** All four question chains drafted. R1-Q1 and R1-Q2 are analytically closed and through paper / presentation. R1-Q3 and R1-Q4 have full notebook content but their per-question READMEs still carry the "scaffolding drafted, body to fill" footer from earlier in the cycle and need a status refresh.
 
-**Distribution.** The library is on GitHub but not yet published to PyPI. The
-eventual policy: once a milestone release is cut, student-facing notebooks install
-from a pinned tag, `pip install git+https://github.com/geraldmc/irilab2026.git@vX.Y.Z`,
-and `@main` is reserved for active development (the iteration shape with
-`--upgrade --force-reinstall`). **No milestone release has been tagged yet**,
-however, so until one is, every notebook — student-facing included — installs from
-`@main`. The switch to `@vX.Y.Z` happens when the first library release is cut
-(see **Cutting a library release**).
+- `r1_orientation.ipynb` — drafted; the post-R1-Q1 structural revision flagged in the v0.1.0 status note has still not been done (see Open decisions).
+- `r1-q1/` — three analytical notebooks (`01_deg_analysis`, `02_core_overlap`, `03_consensus_compare`), all closed. Note: the per-question README still references a `00_question_orientation.ipynb` that was never created in this folder; the row should drop.
+- `r1-q2/` — five notebooks (`00_question_orientation`, `00b_matrix_quality_check`, `01_wgcna`, `02_hub_identification`, `03_comparison`), all closed. The only folder with a `00b` notebook.
+- `r1-q3/` — four notebooks (`00_orient_and_precommit` through `03_compare_and_interpret`), drafted with substantial body content.
+- `r1-q4/` — four notebooks (`00_orient_and_precommit` through `03_wang_evaluation`), drafted. `01_integration.ipynb` (VST + ATH1 alignment + ComBat) was the largest engineering risk in R1 and landed.
+
+**R2 notebooks.** All four question chains drafted. R2-Q1 and R2-Q2 are reference chains (analytically closed); R2-Q3 and R2-Q4 were finalized in the 2026-05-25 → 2026-05-29 window. Per-question READMEs for R2-Q3 and R2-Q4 still carry the "scaffolding drafted" footer and need a status refresh.
+
+- `r2_orientation.ipynb` — drafted. PlantVillage on-ramp via `load_plantvillage_orientation`.
+- `r2-q1/` — five notebooks (`01_pv_orientation` through `05_gap_characterization`), all closed.
+- `r2-q2/` — four notebooks (`01_orientation_and_precommit` through `04_categorization`), all closed. Only R2 notebook with an active second pip install (`segment-anything` in NB04).
+- `r2-q3/` — four notebooks (`00_orient_and_precommit` through `03_comparison`), drafted.
+- `r2-q4/` — four notebooks (`00_orient_and_precommit` through `03_per_disease_interpretation`), drafted.
+
+**Distribution.** Unchanged from prior status. The library is on GitHub but not yet published to PyPI. Eventual policy: once a milestone release is cut, student-facing notebooks install from a pinned tag, `pip install git+https://github.com/geraldmc/irilab2026.git@vX.Y.Z`, and `@main` is reserved for active development. **No milestone release has been tagged yet**, so for now every notebook — student-facing included — installs from `@main`. The switch to `@vX.Y.Z` happens when the first library release is cut (see **Cutting a library release**). The library `__version__` and `pyproject.toml` version have both been bumped to 0.3.0 in step with code additions, but no matching git tag exists; treat these as in-tree version markers, not releases.
