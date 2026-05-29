@@ -10,14 +10,13 @@ See the R1-Q1 question page on Notion for the full Background, Prediction, Workf
 
 | # | File | Workflow row | Brief | Output |
 |---|---|---|---|---|
-| 00 | `00_question_orientation.ipynb` | Week 1 | Question-specific orientation. Picks up from the rationale-level orientation and ends with the per-stress, per-tissue data shape that Notebook 01 consumes. | — |
 | 01 | `01_deg_analysis.ipynb` | Week 2 | Differential expression per (stress × tissue) using InMoose's port of limma. Sixteen (stress × tissue) pairs, 22,810 genes per pair. | `de_results.parquet` (long-format DE table, 364,960 rows) |
 | 02 | `02_core_overlap.ipynb` | Week 3 | Set-intersection across the per-stress DEG lists to identify the common stress core; functional enrichment on the core. | `core_genes.parquet` (9,067-gene core), `bp_enrichment.parquet` (144 BP terms) |
 | 03 | `03_consensus_compare.ipynb` | Week 4 | Compare the recovered core against Hakkak & Tohidfar (2026)'s published consensus. | `comparison_summary.json`, `comparison_genes.parquet` (21,249 rows) |
 
 Week 5 has no new notebook — it's revision against feedback on the paper and presentation.
 
-The rationale-level orientation notebook (`../r1_orientation.ipynb`) loads AtGenExpress and is reused across R1-Q1 through R1-Q4. The question-specific orientation (`00_question_orientation.ipynb` in this folder) picks up from there and prepares the data shape used by `01_deg_analysis.ipynb`.
+The rationale-level orientation notebook (`../r1_orientation.ipynb`) loads AtGenExpress and is reused across R1-Q1 through R1-Q4. R1-Q1 has no question-specific orientation notebook — Notebook 01 picks up directly from the rationale-level orientation.
 
 ## Data
 
