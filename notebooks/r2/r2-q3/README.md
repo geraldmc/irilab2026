@@ -10,14 +10,14 @@ See the R2-Q3 question page on Notion for the full Background, Prediction, Workf
 
 | # | File | Workflow row | Brief | Output |
 |---|---|---|---|---|
-| 00 | `00_orient_and_precommit.ipynb` | Week 1 | Question-specific orientation. Locks five decisions: taxonomy source (R2-Q2 in parallel, R2-Q2's published version, or your own), experimental design (factorial vs hold-one-out), kitchen-sink composition (exact augmentation list), failure-mode-to-augmentation mapping (with the symptom-attended-but-wrong-class exclusion named explicitly), and statistical comparison (specific test, not just "compare"). | `precommit.json` |
+| 00 | `00_orient_and_precommit.ipynb` | Week 1 | Question-specific orientation. Locks six decisions: taxonomy source (R2-Q2 in parallel, R2-Q2's published version, or your own), experimental design (factorial vs hold-one-out), kitchen-sink composition (exact augmentation list), failure-mode-to-augmentation mapping (with the symptom-attended-but-wrong-class exclusion named explicitly), class-space remapping (per-dataset class → category lookup that anchors the PV → PD comparison), and statistical comparison (specific test, not just "compare"). | `precommit.json` |
 | 01 | `01_baseline_and_kitchen_sink.ipynb` | Week 2 | Trains two PV classifiers under the same scaffold: one with no augmentation, one with the precommitted kitchen-sink list. Evaluates both on PV-internal and PD; computes the PV→PD gap for each. | `baseline_classifier.pkl`, `kitchen_sink_classifier.pkl`, `baseline_metrics.parquet`, `kitchen_sink_metrics.parquet` |
 | 02 | `02_targeted_augmentation.ipynb` | Week 3 | Trains the targeted-augmentation classifier per the precommitted failure-mode-to-augmentation mapping. Evaluates on PV-internal and PD; computes the targeted PV→PD gap. | `targeted_classifier.pkl`, `targeted_metrics.parquet` |
 | 03 | `03_comparison.ipynb` | Week 4 | Three-way gap-reduction comparison (no-aug vs kitchen-sink vs targeted) plus the precommitted statistical test. Per-failure-mode breakdown where the data supports it; overall otherwise. Conclusions framed per Consideration 5 — augmentation reduces the problem, doesn't solve it. | `comparison_table.parquet`, `comparison_summary.json` |
 
 Week 5 has no new notebook — it's paper revision against feedback.
 
-The rationale-level orientation notebook (`../r2_orientation.ipynb`) introduces PlantVillage and PlantDoc and is reused across R2-Q1 through R2-Q4. The question-specific orientation (`00_orient_and_precommit.ipynb` in this folder) picks up from there and commits the five experimental-design decisions that the rest of the question executes.
+The rationale-level orientation notebook (`../r2_orientation.ipynb`) introduces PlantVillage and PlantDoc and is reused across R2-Q1 through R2-Q4. The question-specific orientation (`00_orient_and_precommit.ipynb` in this folder) picks up from there and commits the six experimental-design decisions that the rest of the question executes.
 
 R2-Q3 builds on R2-Q2's failure-mode taxonomy. Per Precommit 1, the taxonomy can be inherited from R2-Q2 in parallel, used as published, or replaced with the student's own — but in all three options the question is the same: can those failure modes be operationalized into augmentations that beat a kitchen-sink baseline?
 
@@ -35,4 +35,4 @@ Methodological precedent: the Targeted Data Augmentation (TDA) framework introdu
 
 ## Status
 
-Notebook scaffolding drafted; body section content still to fill. Four notebooks numbered 00–03, opener-plus-preamble base in place, body section headers numbered. NB01 trains two classifiers in one notebook per the four-notebook decision (vs five-notebook); the within-NB01 question of baseline-then-kitchen-sink as two passes vs as a loop over two configs is carried forward to body-content drafting.
+All four notebooks have full body content; the question chain was recently finalized. R2-Q3 has not yet gone through the program's paper / presentation cycle.
