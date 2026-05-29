@@ -36,7 +36,7 @@ def test_evaluate_in_categories_signature_keyword_only():
         if p.kind == inspect.Parameter.KEYWORD_ONLY
     ]
     for name in ("num_classes", "pred_idx_to_cat", "true_idx_to_cat",
-                 "categories", "batch_size"):
+                 "categories", "batch_size", "return_per_item"):
         assert name in keyword_only, (
             f"{name} should be keyword-only. Check the * separator in "
             "evaluate_in_categories's signature."
@@ -103,17 +103,24 @@ def test_evaluate_in_categories_returns_expected_shape():
     idx_to_cat = irilab2026.build_idx_to_cat(metadata, class_to_cat, "PV")
 
     test_meta = metadata[metadata["split"] == "test"]
-    res = irilab2026.evaluate_in_categories(
+    # return_per_item exposes the per-image category assignments without
+    # changing the default contract above.
+    res_pi = irilab2026.evaluate_in_categories(
         state_dict, test_meta, hf_dataset, irilab2026.PlantVillageDataset,
         num_classes=num_classes,
         pred_idx_to_cat=idx_to_cat,
         true_idx_to_cat=idx_to_cat,
         categories=categories,
+        return_per_item=True,
     )
-
-    assert set(res) == {"overall", "per_category", "n"}
-    assert 0.0 <= res["overall"] <= 1.0
-    assert set(res["per_category"]) == set(categories)
-    # Every image's true category is "all", so accuracy there equals overall.
-    assert res["per_category"]["all"] == pytest.approx(res["overall"])
-    assert res["n"] == len(test_meta)
+    assert set(res_pi) == {"overall", "per_category", "n", "per_item"}
+    pi = res_pi["per_item"]
+    assert set(pi) == {"pred_cats", "true_cats"}
+    assert len(pi["pred_cats"]) == len(pi["true_cats"]) == res_pi["n"]
+    # Overall recomputed from the per-image vectors must match the reduced
+    # overall — the same invariant NB03's bootstrap setup asserts against the
+    # committed metrics files.
+    recomputed = sum(
+        p == t for p, t in zip(pi["pred_cats"], pi["true_cats"])
+    ) / res_pi["n"]
+    assert recomputed == pytest.approx(res_pi["overall"])

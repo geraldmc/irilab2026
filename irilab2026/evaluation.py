@@ -82,6 +82,7 @@ def evaluate_in_categories(
     true_idx_to_cat,
     categories,
     batch_size: int = 32,
+    return_per_item: bool = False,
 ):
     """Score a PlantVillage-trained classifier in the shared category space.
 
@@ -114,7 +115,8 @@ def evaluate_in_categories(
         The shared category space, in the order to report.
     batch_size : int, default 32
         Evaluation batch size.
-
+    return_per_item : bool, default False
+        If True, also return a list of per-item predictions and true labels.
     Returns
     -------
     dict
@@ -123,6 +125,13 @@ def evaluate_in_categories(
           category has no examples in this eval set (PlantDoc's test split has
           no `pest` images, for instance).
         - `n` : int, number of images scored.
+        - `per_item` : dict, present only when `return_per_item=True`, with
+          `pred_cats` and `true_cats` — the predicted and true category of
+          each image, as lists in `eval_metadata` order (the loader runs
+          `shuffle=False`). Two conditions scored on the same `eval_metadata`
+          line up position-for-position, which is what lets a paired bootstrap
+          resample image positions and read each condition's correctness at
+          those positions.
 
     Notes
     -----
@@ -161,4 +170,11 @@ def evaluate_in_categories(
             sum(pred_cats[i] == c for i in rows) / len(rows) if rows else None
         )
 
-    return {"overall": overall, "per_category": per_category, "n": len(true_cats)}
+    result = {"overall": overall, "per_category": per_category, "n": len(true_cats)}
+    if return_per_item:
+        # The per-image category assignments this call already computed, in
+        # eval_metadata order. Returned only on request so the default return
+        # contract is unchanged. NB03's bootstrap reads these: same eval set,
+        # same order across conditions -> positional pairing.
+        result["per_item"] = {"pred_cats": pred_cats, "true_cats": true_cats}
+    return result
