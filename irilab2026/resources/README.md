@@ -9,7 +9,7 @@ The *Arabidopsis thaliana* Gene Ontology Annotation file (GAF format) from the
 GO Consortium. Maps AGI gene identifiers to GO terms.
 
 - **Source:** https://current.geneontology.org/annotations/tair.gaf.gz
-- **Downloaded:** <fill in the date you actually downloaded it>
+- **Downloaded:** 2026-05-08
 - **Used by:** `02_core_overlap.ipynb` (R1-Q1, Week 3) for functional enrichment.
 
 The file is bundled because the GO Consortium's distribution server returns
