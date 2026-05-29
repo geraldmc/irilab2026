@@ -30,4 +30,4 @@ The rationale-level orientation notebook (`../r1_orientation.ipynb`) loads AtGen
 
 ## Status
 
-Notebook scaffolding drafted; body section content still to fill. The integration notebook (Notebook 01) is the largest engineering risk in Rationale 1.
+All four notebooks have full body content. Notebook 01 (VST, ATH1 alignment, ComBat) was the largest engineering risk in Rationale 1 and landed. R1-Q4 has not yet gone through the program's paper / presentation cycle.
