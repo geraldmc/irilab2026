@@ -6,11 +6,13 @@ The Virtual Lab repository for the *Decoding Plant Biology* portion of iResearch
 
 ```
 irilab2026/
+│
 ├── irilab2026/                       # Python library (plumbing only)
 │   ├── environment.py                # Colab setup, Drive mounting, runtime checks
 │   ├── data.py                       # dataset loaders (gene expression and plant images)
 │   ├── vision.py                     # image-classifier helpers
-│   └── training.py                   # training loop helpers
+│   ├── training.py                   # training loop helpers
+│   └── evaluation.py                 # category-space scoring for PV → PD comparison
 │
 ├── notebooks/                        # Jupyter notebooks for every question
 │   │
@@ -75,18 +77,19 @@ For a map of the whole notebook tree, see `notebooks/README.md`.
 
 ## The library
 
-`irilab2026` (currently v0.2.0) provides:
+`irilab2026` (currently v0.3.0) provides:
 
 - **Environment** — `setup()`, Drive mounting, runtime and GPU checks, output and cache directory helpers, deterministic seeding.
-- **Data** — loaders for the AtGenExpress abiotic stress series, PlantVillage, and PlantDoc; an AtGenExpress sample-metadata helper; a probe → AGI mapping for Arabidopsis microarray work.
-- **Vision** — a ResNet-18 baseline classifier and the ImageNet-style training and evaluation transforms the R2 notebooks use.
-- **Training** — a reusable training helper that implements the project's canonical training recipe (used by R2-Q1's baseline classifier and by R2-Q2's data-randomization sanity check).
+- **Data** — loaders for AtGenExpress (gene expression) and for PlantVillage and PlantDoc (plant disease images); an AtGenExpress sample-metadata helper; a probe → AGI mapping for Arabidopsis microarray work; a bundled TAIR GO annotation file for functional enrichment.
+- **Vision** — a ResNet-18 baseline classifier and the image transforms the R2 notebooks use: the standard ImageNet train and eval pipelines plus a RandAugment train pipeline for kitchen-sink augmentation.
+- **Training** — a reusable training helper that implements the project's canonical training recipe, used across R2 wherever a baseline classifier needs to be (re)trained. Accepts a custom augmentation transform so R2-Q3 can vary it across conditions.
+- **Evaluation** — category-space scoring used in the PV → PD comparison: turn a dataset's `class_idx` into the shared disease-category space, then score a PV-trained model on either PV-internal or PD images.
 
 See the docstrings in each module for the full API. Public API is what's exported from `irilab2026/__init__.py`; anything else is internal.
 
 ## Status
 
-`irilab2026` is at v0.2.0. The R1-Q1, R1-Q2, R2-Q1, and R2-Q2 notebook chains are complete and verified to run end-to-end on Colab. R1-Q3, R1-Q4, R2-Q3, and R2-Q4 are at earlier stages of buildout. Each question folder's README is the source of truth for that question's current state.
+`irilab2026` is at v0.3.0. All eight notebook chains are drafted and runnable. R1-Q1, R1-Q2, R2-Q1, and R2-Q2 are reference chains — complete, mentor-verified end-to-end on Colab, and through the program's paper / presentation cycle. R1-Q3, R1-Q4, R2-Q3, and R2-Q4 are recently finalized and ready for mentee use; their paper / presentation cycles are in progress. Each question folder's README is the source of truth for that question's current state.
 
 ## Development
 
