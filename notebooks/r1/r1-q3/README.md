@@ -11,13 +11,15 @@ See the R1-Q3 question page on Notion for the full Background, Prediction, Workf
 | # | File | Workflow row | Brief | Output |
 |---|---|---|---|---|
 | 00 | `00_orient_and_precommit.ipynb` | Week 1 | Restate the question; precommit attribution method, reference gene set, operational definition of "artifact-like," and data-source/stress-class scope. | `precommit.json` |
-| 01 | `01_classifier.ipynb` | Week 2 | Train a multi-class stress classifier on AtGenExpress per the precommitted scope. Evaluate on a held-out test split; apply the accuracy gate before proceeding. | `classifier.pkl`, `classifier_metrics.parquet`, `classifier_summary.json` |
-| 02 | `02_shap.ipynb` | Week 3 | Apply the precommitted attribution method to the trained classifier on the test split. Per-class top-attributed gene lists. | `attribution_scores.parquet`, `top_attributed_genes.json`, `attribution_summary.json` |
-| 03 | `03_compare_and_interpret.ipynb` | Week 4 | Compare top-attributed genes against the precommitted reference set; test for technical-metadata correlation; apply the "artifact-like" rule; assign the Strong / Mixed / Low Overlap verdict. | `attribution_overlap.parquet`, `overlap_genes.parquet`, `attribution_comparison.json` |
+| 01 | `01_classifier.ipynb` | Week 2 | Apply your tissue-handling decision, then train a multi-class stress classifier on AtGenExpress per the precommitted scope. Evaluate on a held-out test split; the accuracy gate decides whether the model is worth interpreting. | `classifier.pkl`, `classifier_summary.json`, `test_splits.parquet`, `controls_background.parquet` |
+| 02 | `02_shap.ipynb` | Week 3 | Apply the precommitted attribution method to the trained classifier on the test split, using the control samples as the SHAP background. Per-class top-attributed gene lists. | `attribution_scores.parquet`, `top_attributed_genes.json`, `attribution_summary.json` |
+| 03 | `03_compare_and_interpret.ipynb` | Week 4 | Compare top-attributed genes against the precommitted reference set; test for technical-metadata correlation; apply the "artifact-like" rule; assign the Strong / Mixed / Low Overlap verdict. | `verdicts.parquet`, `comparison_summary.json` |
 
 Week 5 has no new notebook — it's revision against feedback on the paper and presentation.
 
 The rationale-level orientation notebook (`../r1_orientation.ipynb`) loads AtGenExpress and is reused across R1-Q1 through R1-Q4. The question-specific orientation (`00_orient_and_precommit.ipynb` in this folder) picks up from there, locks the four precommit decisions, and produces the `precommit.json` file that Notebooks 01–03 read from.
+
+Notebook 01 ends in an explicit accuracy gate: if the classifier isn't good enough to be worth interpreting, it stops there. The gate verdict is recorded in `classifier_summary.json`, which Notebooks 02 and 03 read before proceeding.
 
 ## Data
 
@@ -27,11 +29,10 @@ Reference set for the verdict in Notebook 03: Hakkak & Tohidfar (2026) consensus
 
 ## Caveats carried into these notebooks
 
-These come from the R1-Q3 considerations on the Notion question page; brief versions:
-
-- **Train per-tissue or include tissue as an explicit covariate.** Tissue identity accounts for a larger share of expression variance in AtGenExpress than any single stress treatment. A classifier trained on pooled samples can hit high accuracy by recognizing tissue and exploiting tissue-stress correlations in the experimental design — a tissue classifier that happens to do okay on stress, not the other way around. Either split your training by tissue or model tissue explicitly so it can't act as a hidden shortcut.
-- **Lock the attribution method and the reference set in writing before running.** SHAP, integrated gradients, and permutation importance produce different per-class rankings; the curated reference set you compare against also shapes the verdict. Swapping either after seeing attributions is fitting the method to the conclusion. Both choices are committed in Notebook 00 and read by Notebooks 02 and 03.
-- **Define "artifact-like" operationally before you run, not after.** A defensible rule: top-attributed genes are artifact-like if their overlap with the reference set is no greater than chance *and* their attribution scores correlate with technical metadata (batch, processing date, tissue identity) at a pre-specified threshold. Deciding what "artifact-like" means after seeing the results means you can no longer answer the question honestly.
+- **Apply a tissue-handling decision before training.** Tissue identity accounts for more expression variance in AtGenExpress than any single stress treatment, so a classifier trained on pooled shoot+root can reach high accuracy by recognizing tissue and exploiting tissue-stress correlations in the experimental design — a tissue classifier that happens to do okay on stress, not the reverse. NB01 Section 3 makes you either split training by tissue or model tissue as an explicit covariate, so it can't act as a hidden shortcut.
+- **Don't attribute a classifier that hasn't cleared the accuracy gate.** AtGenExpress is clean and well-separated, so a model can reach high test accuracy while keying on features that have nothing to do with stress biology. Attribution on an unchecked or weak classifier manufactures a story about features that don't actually drive predictions. NB01 Section 5 is an explicit stop-here gate; the SHAP work in NB02 is meant to run only on a model that cleared it.
+- **Lock the attribution method and the reference set in writing before running.** SHAP, integrated gradients, and permutation importance produce different per-class rankings, and the curated reference set you compare against also shapes the verdict. Swapping either after seeing attributions is fitting the method to the conclusion. Both choices are committed in NB00 (`attribution_method`, `reference_gene_set`) and read by NB02 and NB03.
+- **Define "artifact-like" operationally before you run, not after.** The committed rule (NB00's `artifact_like_definition`): top-attributed genes are artifact-like if their overlap with the reference set is no greater than chance *and* their attribution scores correlate with technical metadata (batch, processing date, tissue identity) above a pre-specified threshold. NB03 applies exactly this rule to assign the Strong / Mixed / Low Overlap verdict. Deciding what "artifact-like" means after seeing the results means you can no longer answer the question honestly.
 
 ## Files
 
@@ -40,17 +41,19 @@ All notebook outputs and the precommit file share a Drive folder at `/content/dr
 | File | Producer | Consumer |
 |---|---|---|
 | `precommit.json` | Notebook 00 | Notebooks 01, 02, 03 |
-| `classifier.pkl` | Notebook 01 | Notebooks 02, 03 |
-| `classifier_metrics.parquet` | Notebook 01 | (paper / presentation) |
-| `classifier_summary.json` | Notebook 01 | (paper / presentation) |
+| `classifier.pkl` | Notebook 01 | Notebook 02 |
+| `classifier_summary.json` | Notebook 01 | Notebooks 02, 03 (carries the accuracy-gate verdict) |
+| `test_splits.parquet` | Notebook 01 | Notebook 02 |
+| `controls_background.parquet` | Notebook 01 | Notebook 02 (SHAP background samples) |
 | `attribution_scores.parquet` | Notebook 02 | Notebook 03 |
 | `top_attributed_genes.json` | Notebook 02 | Notebook 03 |
 | `attribution_summary.json` | Notebook 02 | Notebook 03 |
-| `attribution_overlap.parquet` | Notebook 03 | (paper / presentation) |
-| `overlap_genes.parquet` | Notebook 03 | (paper / presentation) |
-| `attribution_comparison.json` | Notebook 03 | (paper / presentation) |
+| `verdicts.parquet` | Notebook 03 | (paper / presentation) |
+| `comparison_summary.json` | Notebook 03 | (paper / presentation) |
 | `hakkak_2026_supp1.csv` | (student upload) | Notebook 03 |
+
+`classifier.pkl` is a joblib-pickled scikit-learn classifier bundle, so `.pkl` is correct here (the same convention as R1-Q4; the Rationale 2 chains save PyTorch state dicts as `.pt`).
 
 ## Status
 
-All four notebooks have full body content. R1-Q3 has not yet gone through the program's paper / presentation cycle.
+All four notebooks have full body content; the question chain was recently finalized. R1-Q3 has not yet gone through the program's paper / presentation cycle.
