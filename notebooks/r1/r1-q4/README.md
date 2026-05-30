@@ -28,6 +28,23 @@ The rationale-level orientation notebook (`../r1_orientation.ipynb`) loads AtGen
 - **The 168 h Wang 2023 timepoint is well outside AtGenExpress's 24 h max.** Handling decision (exclude vs out-of-distribution probe) is the Precommit 2 entry in Notebook 00.
 - **Two Python ports stack in the integration step.** pyDESeq2 for VST and a Python ComBat (pycombat / InMoose / neuroCombat) for batch correction. A spot-check against an R reference is worth doing before trusting the integrated output.
 
+## Files
+
+All notebook outputs share a Drive folder at `/content/drive/MyDrive/irilab2026_outputs/r1_q4/`:
+
+| File | Producer | Consumer |
+|---|---|---|
+| `precommit.json` | Notebook 00 | Notebooks 01, 02, 03 |
+| `wang_aligned.parquet` | Notebook 01 | Notebook 03 |
+| `integrated_matrix.parquet` | Notebook 01 | Notebooks 02, 03 |
+| `integration_summary.json` | Notebook 01 | (paper / presentation) |
+| `classifier.pkl` | Notebook 02 | Notebook 03 |
+| `classifier_metrics.parquet` | Notebook 02 | (paper / presentation) |
+| `classifier_summary.json` | Notebook 02 | (paper / presentation) |
+| `wang_transfer_accuracy.parquet` | Notebook 03 | (paper / presentation) |
+| `wang_predictions.parquet` | Notebook 03 | (paper / presentation) |
+| `transfer_summary.json` | Notebook 03 | (paper / presentation) |
+
 ## Status
 
 All four notebooks have full body content. Notebook 01 (VST, ATH1 alignment, ComBat) was the largest engineering risk in Rationale 1 and landed. R1-Q4 has not yet gone through the program's paper / presentation cycle.

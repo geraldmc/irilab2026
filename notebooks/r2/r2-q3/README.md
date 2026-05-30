@@ -33,6 +33,22 @@ Methodological precedent: the Targeted Data Augmentation (TDA) framework introdu
 - **Kitchen-sink may incidentally reduce the gap.** Per the page's Prediction: RandAugment-style kitchen-sink augmentation can pick up the same shortcut-suppression signal as a targeted set, just less precisely. A small targeted-vs-kitchen-sink margin is therefore not a null result — it is evidence that kitchen-sink reached the same fix. NB03's interpretation should frame the comparison as "did targeted reduce the gap *more than kitchen-sink did*," not "did targeted reduce the gap."
 - **Background-shortcut contamination is upstream of all three conditions.** Noyan (2022) Table 6 shows PV's capture bias has contaminated the foreground itself, not just the background, predicting class at ~10% on foreground-only blurred imagery (vs ~2.6% random-guess). No augmentation pipeline tested here removes that contamination at its source. Per Consideration 5: augmentation reduces the problem, doesn't solve it.
 
+## Files
+
+All notebook outputs share a Drive folder at `/content/drive/MyDrive/irilab2026_outputs/r2_q3/`:
+
+| File | Producer | Consumer |
+|---|---|---|
+| `precommit.json` | Notebook 00 | Notebooks 01, 02, 03 |
+| `baseline_classifier.pkl` | Notebook 01 | Notebook 03 |
+| `kitchen_sink_classifier.pkl` | Notebook 01 | Notebook 03 |
+| `baseline_metrics.parquet` | Notebook 01 | Notebook 03 |
+| `kitchen_sink_metrics.parquet` | Notebook 01 | Notebook 03 |
+| `targeted_classifier.pkl` | Notebook 02 | Notebook 03 |
+| `targeted_metrics.parquet` | Notebook 02 | Notebook 03 |
+| `comparison_table.parquet` | Notebook 03 | (paper / presentation) |
+| `comparison_summary.json` | Notebook 03 | (paper / presentation) |
+
 ## Status
 
 All four notebooks have full body content; the question chain was recently finalized. R2-Q3 has not yet gone through the program's paper / presentation cycle.

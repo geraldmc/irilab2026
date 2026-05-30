@@ -31,6 +31,22 @@ No external comparison anchor for R2-Q4. The interpretive frame is the page's 2Ã
 - **Per-disease claims, not sweeping ones.** Per Consideration 4 on the page: the gap is per-disease. Aggregating to one overall cross-host accuracy washes out the most important signal. Reporting must commit to which diseases transferred and which didn't, not just an average.
 - **Low within-host accuracy is itself informative.** Per Consideration 3 on the page: if the within-host classifier underperforms, that doesn't mean the disease is hard to transfer â€” it could mean the disease is hard to classify in general. The gap is meaningful only relative to your actual within-host finding. This shapes how N01's accuracy-gate decision gets read in N02 and N03.
 
+## Files
+
+All notebook outputs share a Drive folder at `/content/drive/MyDrive/irilab2026_outputs/r2_q4/`:
+
+| File | Producer | Consumer |
+|---|---|---|
+| `precommit.json` | Notebook 00 | Notebooks 01, 02, 03 |
+| `classifier.pkl` | Notebook 01 | Notebooks 02, 03 |
+| `within_host_test.parquet` | Notebook 01 | Notebook 02 |
+| `within_host_accuracy.parquet` | Notebook 01 | Notebook 02 |
+| `cross_host_accuracy.parquet` | Notebook 02 | Notebook 03 |
+| `gap_table.parquet` | Notebook 02 | Notebook 03 |
+| `comparison_summary.json` | Notebook 02 | Notebook 03 |
+| `interpretation_table.parquet` | Notebook 03 | (paper / presentation) |
+
+
 ## Status
 
 All four notebooks have full body content; the question chain was recently finalized. R2-Q4 has not yet gone through the program's paper / presentation cycle.
