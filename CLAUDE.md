@@ -186,15 +186,15 @@ The library has grown beyond setup-and-load-only into a full support layer for b
 
 Tests in `tests/` remain network-free and pass — 86 tests across 7 files covering all five modules, including the recent `train_transform=` and `val_dataset_class=` parameters on `train_baseline`.
 
-**R1 notebooks.** All four question chains drafted. R1-Q1 and R1-Q2 are analytically closed and through paper / presentation. R1-Q3 and R1-Q4 have full notebook content but their per-question READMEs still carry the "scaffolding drafted, body to fill" footer from earlier in the cycle and need a status refresh.
+**R1 notebooks.** All four question chains drafted. R1-Q1 and R1-Q2 are analytically closed and through paper / presentation. R1-Q3 and R1-Q4 have full notebook content; their per-question READMEs were refreshed on 2026-05-30 and no longer carry the old "scaffolding drafted, body to fill" footer.
 
 - `r1_orientation.ipynb` — drafted; the post-R1-Q1 structural revision flagged in the v0.1.0 status note has still not been done (see Open decisions).
-- `r1-q1/` — three analytical notebooks (`01_deg_analysis`, `02_core_overlap`, `03_consensus_compare`), all closed. Note: the per-question README still references a `00_question_orientation.ipynb` that was never created in this folder; the row should drop.
+- `r1-q1/` — three analytical notebooks (`01_deg_analysis`, `02_core_overlap`, `03_consensus_compare`), all closed. The README's stale reference to a never-created `00_question_orientation.ipynb` was removed in the 2026-05-30 cleanup.
 - `r1-q2/` — five notebooks (`00_question_orientation`, `00b_matrix_quality_check`, `01_wgcna`, `02_hub_identification`, `03_comparison`), all closed. The only folder with a `00b` notebook.
 - `r1-q3/` — four notebooks (`00_orient_and_precommit` through `03_compare_and_interpret`), drafted with substantial body content.
 - `r1-q4/` — four notebooks (`00_orient_and_precommit` through `03_wang_evaluation`), drafted. `01_integration.ipynb` (VST + ATH1 alignment + ComBat) was the largest engineering risk in R1 and landed.
 
-**R2 notebooks.** All four question chains drafted. R2-Q1 and R2-Q2 are reference chains (analytically closed); R2-Q3 and R2-Q4 were finalized in the 2026-05-25 → 2026-05-29 window. Per-question READMEs for R2-Q3 and R2-Q4 still carry the "scaffolding drafted" footer and need a status refresh.
+**R2 notebooks.** All four question chains drafted. R2-Q1 and R2-Q2 are reference chains (analytically closed); R2-Q3 and R2-Q4 were finalized in the 2026-05-25 → 2026-05-29 window. Per-question READMEs for R2-Q3 and R2-Q4 were refreshed on 2026-05-30 and no longer carry the old "scaffolding drafted" footer.
 
 - `r2_orientation.ipynb` — drafted. PlantVillage on-ramp via `load_plantvillage_orientation`.
 - `r2-q1/` — five notebooks (`01_pv_orientation` through `05_gap_characterization`), all closed.
