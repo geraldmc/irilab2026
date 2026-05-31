@@ -13,7 +13,7 @@ See the R2-Q2 question page on Notion for the full Background, Prediction, Workf
 | 01 | `01_orientation_and_precommit.ipynb` | Week 1 | Orients on the failure-mode literature (Adebayo et al. 2018, Noyan 2022, Grad-CAM mechanics) and on the four files R2-Q2 inherits from R2-Q1. Pre-commits the full categorization recipe: taxonomy, leaf-segmentation method (SAM), attention-mass definition, the four numeric predicates with their first-match-wins order and threshold values, the aggregation level, and the Adebayo sanity-check pass criterion. | `precommit.json` |
 | 02 | `02_load_and_filter.ipynb` | Week 2 | Loads R2-Q1's outputs (classifier path, PD predictions, class-space mappings), filters PD predictions to the rows where the model misclassified at the category level, annotates with true and predicted category, and characterizes the resulting misclassification set as hypotheses to revisit. | `working_set.parquet` (81 rows) |
 | 03 | `03_sanity_checks_and_gradcam.ipynb` | Week 3 | Runs Adebayo et al. (2018)'s two sanity checks (model-parameter randomization and data randomization) on the Grad-CAM method to confirm it tracks model behavior rather than producing spurious heatmaps. Computes Grad-CAM heatmaps for each misclassification, with target class set to the model's predicted class. Heatmaps are saved at the last conv block's spatial resolution (7×7); N04 upsamples them at use time. | `sanity_check_trajectory.png`, `shuffled_resnet18.pt`, `heatmaps/*.npy` (81 files), `gradcam_metadata.parquet`, `sanity_check_results.json` |
-| 04 | `04_categorization.ipynb` | Week 4 | Applies the taxonomy end-to-end. Segments leaves with SAM, validates segmentation quality and filters the working set, computes the five derived quantities per image, applies the four pre-committed predicates in order, produces the failure-mode distribution. | `leaf_masks_metadata.parquet`, `working_set_unfiltered.parquet`, `derived_quantities.parquet`, `predicate_results.parquet`, `categorizations.parquet`, `taxonomy_distribution.json`, `taxonomy_distribution.png` |
+| 04 | `04_categorization.ipynb` | Week 4 | Applies the taxonomy end-to-end. Segments leaves with SAM, validates segmentation quality and filters the working set, computes the five derived quantities per image, applies the four pre-committed predicates in order, produces the failure-mode distribution. | `leaf_masks_metadata.parquet`, `working_set_unfiltered.parquet`, `analysis_ready.parquet`, `derived_quantities.parquet`, `predicate_results.parquet`, `categorizations.parquet`, `taxonomy_distribution.json`, `taxonomy_distribution.png` |
 
 Week 5 has no new notebook — it's paper writing and revision against feedback.
 
@@ -51,6 +51,7 @@ All notebook outputs share a Drive folder at `/content/drive/MyDrive/irilab2026_
 | `sanity_check_results.json` | Notebook 03 | (paper / presentation) |
 | `leaf_masks_metadata.parquet` | Notebook 04 | (paper / presentation) |
 | `working_set_unfiltered.parquet` | Notebook 04 | (paper / reproducibility) |
+| `analysis_ready.parquet` | Notebook 04 | (paper / reproducibility) — the SAM-filtered working set |
 | `derived_quantities.parquet` | Notebook 04 | (paper / presentation) |
 | `predicate_results.parquet` | Notebook 04 | (paper / presentation) |
 | `categorizations.parquet` | Notebook 04 | (paper / presentation) |
