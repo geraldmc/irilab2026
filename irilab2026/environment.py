@@ -158,23 +158,43 @@ def has_gpu() -> bool:
     return bool(torch.cuda.is_available())
 
 
+def _colab_drive_root() -> Path | None:
+    """Return the mounted Google Drive root in Colab, or None if unavailable.
+
+    Colab mounts Drive at ``/content/drive/MyDrive`` (the canonical path).
+    Older mounts also exposed ``/content/drive/My Drive`` (with a space) as a
+    symlink; we accept that spelling only if the canonical one is absent.
+    Returns None outside Colab or when Drive is not mounted, which lets callers
+    fall back to ephemeral storage instead of silently creating a stray
+    ``/content/drive/MyDrive`` directory on an unmounted runtime.
+    """
+    if not is_colab():
+        return None
+    canonical = Path("/content/drive/MyDrive")
+    if canonical.exists():
+        return canonical
+    legacy = Path("/content/drive/My Drive")
+    if legacy.exists():
+        return legacy
+    return None
+
+
 def cache_dir() -> Path:
     """
     Return the directory where datasets should be cached.
 
-    In Colab with Drive mounted: ``/content/drive/My Drive/irilab2026_cache/``.
+    In Colab with Drive mounted: ``/content/drive/MyDrive/irilab2026_cache/``.
     In Colab without Drive: ``/content/irilab2026_cache/`` (lost on session
     reset; only used as a fallback).
     Outside Colab: ``~/.irilab2026_cache/``.
 
     The directory is created if it doesn't exist.
     """
-    if is_colab():
-        drive_root = Path("/content/drive/My Drive")
-        if drive_root.exists():
-            path = drive_root / "irilab2026_cache"
-        else:
-            path = Path("/content/irilab2026_cache")
+    drive_root = _colab_drive_root()
+    if drive_root is not None:
+        path = drive_root / "irilab2026_cache"
+    elif is_colab():
+        path = Path("/content/irilab2026_cache")
     else:
         path = Path.home() / ".irilab2026_cache"
     path.mkdir(parents=True, exist_ok=True)
@@ -184,7 +204,8 @@ def output_dir(question_slug: str) -> Path:
     """Return the output directory for a given question, creating it if missing.
 
     The path is environment-dependent:
-        Colab: /content/drive/MyDrive/irilab2026_outputs/<question_slug>/
+        Colab with Drive mounted: /content/drive/MyDrive/irilab2026_outputs/<question_slug>/
+        Colab without Drive: /content/irilab2026_outputs/<question_slug>/ (ephemeral)
         Local: ~/.irilab2026_outputs/<question_slug>/
 
     Use this to read or write per-question artifacts produced by one notebook
@@ -204,8 +225,11 @@ def output_dir(question_slug: str) -> Path:
         The per-question output directory. The directory is created if it
         does not already exist.
     """
-    if is_colab():
-        root = Path("/content/drive/MyDrive/irilab2026_outputs")
+    drive_root = _colab_drive_root()
+    if drive_root is not None:
+        root = drive_root / "irilab2026_outputs"
+    elif is_colab():
+        root = Path("/content/irilab2026_outputs")
     else:
         root = Path.home() / ".irilab2026_outputs"
     path = root / question_slug
