@@ -7,31 +7,35 @@ The Virtual Lab repository for the *Decoding Plant Biology* portion of iResearch
 ```
 irilab2026/
 │
-├── irilab2026/                       # Python library (plumbing only)
-│   ├── environment.py                # Colab setup, Drive mounting, runtime checks
-│   ├── data.py                       # dataset loaders (gene expression and plant images)
-│   ├── vision.py                     # image-classifier helpers
-│   ├── training.py                   # training loop helpers
-│   └── evaluation.py                 # category-space scoring for PV → PD comparison
+├── irilab2026/                         # Python library (plumbing only)
+│   ├── environment.py                  # Colab setup, Drive mounting, runtime checks
+│   ├── data.py                         # dataset loaders (gene expression and plant images)
+│   ├── vision.py                       # image-classifier helpers
+│   ├── training.py                     # training loop helpers
+│   └── evaluation.py                   # category-space scoring for PV → PD comparison
 │
-├── notebooks/                        # Jupyter notebooks for every question
+├── notebooks/                          # Jupyter notebooks for every question
 │   │
-│   ├── r1/                           # Rationale 1: Gene Expression
+│   │──tutorials/
+│   │  ├── google_colab_tutorial.ipynb
+│   │  ├── introduction_to_python.ipynb
+│   │
+│   ├── r1/                             # Rationale 1: Gene Expression
 │   │   ├── r1_orientation.ipynb
-│   │   ├── r1-q1/                    # Common stress core
-│   │   ├── r1-q2/                    # Hub genes from co-expression
-│   │   ├── r1-q3/                    # Feature attribution under batch effects
-│   │   └── r1-q4/                    # Cross-dataset stress classifier
+│   │   ├── r1-q1/                      # Common stress core
+│   │   ├── r1-q2/                      # Hub genes from co-expression
+│   │   ├── r1-q3/                      # Feature attribution under batch effects
+│   │   └── r1-q4/                      # Cross-dataset stress classifier
 │   │   
-│   └── r2/                           # Rationale 2: Plant Disease Imaging
+│   └── r2/                             # Rationale 2: Plant Disease Imaging
 │       ├── r2_orientation.ipynb
-│       ├── r2-q1/                    # PV → PD transferability
-│       ├── r2-q2/                    # Grad-CAM failure modes
-│       ├── r2-q3/                    # Targeted vs kitchen-sink augmentation
-│       └── r2-q4/                    # Cross-host transfer within PV
+│       ├── r2-q1/                      # PV → PD transferability
+│       ├── r2-q2/                      # Grad-CAM failure modes
+│       ├── r2-q3/                      # Targeted vs kitchen-sink augmentation
+│       └── r2-q4/                      # Cross-host transfer within PV
 │  
-├── tests/                            # smoke tests for the library
-├── scripts/                          # ad-hoc scripts (data release tooling)
+├── tests/                              # smoke tests for the library
+├── scripts/                            # ad-hoc scripts (data release tooling)
 ├── pyproject.toml
 ├── CHANGELOG.md
 ├── CLAUDE.md
@@ -66,7 +70,14 @@ Local execution is documented but not the supported primary path. "Works on my m
 
 ## Where to start
 
-Pick your rationale and open its orientation notebook first:
+Start in `notebooks/tutorials/` — two short notebooks that get you running before any science:
+
+1. `google_colab_tutorial.ipynb` — how to open, run, and save notebooks in Google Colab.
+2. `introduction_to_python.ipynb` — the Python you'll need for the question notebooks.
+
+Comfortable with Colab and Python already? Skim them and move on.
+
+Then pick your rationale and open its orientation notebook:
 
 - **Rationale 1** (gene expression / machine learning on omics data) — open `notebooks/r1/r1_orientation.ipynb`. It walks through the AtGenExpress abiotic stress dataset and leaves the data in the shape the R1-Q1 through R1-Q4 notebooks pick up from.
 - **Rationale 2** (computer vision / plant disease imagery) — open `notebooks/r2/r2_orientation.ipynb`. It does the same job for the PlantVillage and PlantDoc image datasets used across R2-Q1 through R2-Q4.
