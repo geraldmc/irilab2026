@@ -18,8 +18,8 @@ irilab2026/
 │   │
 │   │──tutorials/
 │   │  ├── google_colab_tutorial.ipynb
-│   │  ├── introduction_to_python.ipynb
-│   │  │
+│   │  └── introduction_to_python.ipynb
+│   │
 │   ├── r1/                             # Rationale 1: Gene Expression
 │   │   ├── r1_orientation.ipynb
 │   │   ├── r1-q1/                      # Common stress core
