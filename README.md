@@ -16,7 +16,7 @@ irilab2026/
 │
 ├── notebooks/                          # Jupyter notebooks for every question
 │   │
-│   │──tutorials/
+│   ├──tutorials/
 │   │  ├── google_colab_tutorial.ipynb
 │   │  └── introduction_to_python.ipynb
 │   │
